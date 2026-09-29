@@ -2,7 +2,9 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { 
   initializeFirestore, 
   getFirestore, 
-  Firestore 
+  Firestore,
+  doc,
+  getDoc
 } from 'firebase/firestore';
 
 // Read config from environment variables or fallback to JSON
@@ -46,9 +48,35 @@ export function formatDateDisplay(isoDate: string): string {
   return isoDate;
 }
 
-export async function getWebhookConfig(): Promise<{ url: string; secret: string }> {
-  const url = process.env.APPS_SCRIPT_URL?.trim() || '';
-  const secret = process.env.APPS_SCRIPT_SECRET?.trim() || '';
+export async function getWebhookConfig(override?: { url?: string; secret?: string }): Promise<{ url: string; secret: string }> {
+  let url = override?.url?.trim() || process.env.APPS_SCRIPT_URL?.trim() || '';
+  let secret = override?.secret?.trim() || process.env.APPS_SCRIPT_SECRET?.trim() || '';
+
+  // If not provided or configured in env, attempt to fetch from Firestore system_settings/apps_script
+  if (!url) {
+    try {
+      const db = getDb();
+      const snap = await getDoc(doc(db, 'system_settings', 'apps_script'));
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data?.url) {
+          url = String(data.url).trim();
+          secret = String(data.secret || secret).trim();
+        }
+      }
+    } catch (err) {
+      console.warn('[WEBHOOK CONFIG] Note: Could not read system_settings/apps_script from Firestore:', err);
+    }
+  }
+
+  // Cache in process.env for subsequent calls in the same serverless instance
+  if (url && !process.env.APPS_SCRIPT_URL) {
+    process.env.APPS_SCRIPT_URL = url;
+  }
+  if (secret && !process.env.APPS_SCRIPT_SECRET) {
+    process.env.APPS_SCRIPT_SECRET = secret;
+  }
+
   return { url, secret };
 }
 
@@ -57,11 +85,16 @@ export async function sendViaGoogleAppsScript(payload: {
   subject: string;
   html: string;
   photoBase64?: string;
+  webhookUrl?: string;
+  webhookSecret?: string;
 }): Promise<{ ok: boolean; error?: string; status?: number; responseText?: string }> {
-  const { url: scriptUrl, secret: scriptSecret } = await getWebhookConfig();
+  const { url: scriptUrl, secret: scriptSecret } = await getWebhookConfig({
+    url: payload.webhookUrl,
+    secret: payload.webhookSecret
+  });
 
   if (!scriptUrl) {
-    const errorMsg = 'APPS_SCRIPT_URL chưa được cấu hình trong Environment Variables của Vercel.';
+    const errorMsg = 'APPS_SCRIPT_URL chưa được cấu hình. Vui lòng cấu hình biến môi trường APPS_SCRIPT_URL trên Vercel hoặc nhập Webhook URL trong giao diện ứng dụng.';
     console.warn('[GAS WEBHOOK]', errorMsg);
     return { ok: false, error: errorMsg };
   }

@@ -15,7 +15,8 @@ export default async function handler(req: any, res: any) {
 
   try {
     const { targetEmail, url, secret } = req.body || {};
-    const to = targetEmail ? [targetEmail] : ['y-p@dymvietnam.net'];
+    const toRaw = targetEmail ? [targetEmail, 'y-p@dymvietnam.net'] : ['y-p@dymvietnam.net'];
+    const to = Array.from(new Set(toRaw.map(e => e.trim().toLowerCase())));
 
     if (url) process.env.APPS_SCRIPT_URL = url.trim();
     if (secret) process.env.APPS_SCRIPT_SECRET = secret.trim();
@@ -31,7 +32,9 @@ export default async function handler(req: any, res: any) {
     const result = await sendViaGoogleAppsScript({
       to,
       subject: '[DYM TEST] Kiểm tra kết nối gửi email qua Google Apps Script',
-      html: testHtml
+      html: testHtml,
+      webhookUrl: url,
+      webhookSecret: secret
     });
 
     return res.json(result);

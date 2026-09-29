@@ -281,16 +281,22 @@ export const BookingForm: React.FC<BookingFormProps> = ({
         laptopPassword: laptopPassword || '976431'
       });
 
-      // User specified: "Script tự thêm y-p@dymvietnam.net vào người nhận, nên chỉ cần truyền email người mượn."
-      const borrowerEmail = registrantEmail.trim();
-      queueNotificationEmail({
-        to: borrowerEmail ? [borrowerEmail] : [],
+      // Send notification to borrower, current user, and admin y-p@dymvietnam.net
+      const borrowerEmail = (registrantEmail || currentUserEmail || '').trim();
+      const recipients = Array.from(new Set([borrowerEmail, currentUserEmail, 'y-p@dymvietnam.net'].filter(Boolean)));
+
+      const mailResult = await queueNotificationEmail({
+        to: recipients,
         subject: emailContent.subject,
         html: emailContent.html,
         type: 'borrow'
       });
 
-      setSuccessMessage(`Đăng ký mượn ${device} thành công! Email thông báo đã được gửi.`);
+      if (mailResult && mailResult.ok === false) {
+        setSuccessMessage(`Đăng ký mượn ${device} thành công! (Lưu ý: Chưa gửi được email: ${mailResult.error || 'Vui lòng kiểm tra Webhook'})`);
+      } else {
+        setSuccessMessage(`Đăng ký mượn ${device} thành công! Email thông báo đã được gửi.`);
+      }
       setPurpose('');
       setDevice('');
 

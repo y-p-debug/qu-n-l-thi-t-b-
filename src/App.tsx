@@ -135,19 +135,18 @@ export default function App() {
               });
 
               const borrowerEmail = (b.registrantEmail || '').trim();
-              if (borrowerEmail) {
-                const { subject, html } = generateEmailHtml({
-                  actionType: 'overdue',
-                  booking: b
-                });
+              const recipients = Array.from(new Set([borrowerEmail, 'y-p@dymvietnam.net'].filter(Boolean)));
+              const { subject, html } = generateEmailHtml({
+                actionType: 'overdue',
+                booking: b
+              });
 
-                await queueNotificationEmail({
-                  to: [borrowerEmail],
-                  subject,
-                  html,
-                  type: 'overdue'
-                });
-              }
+              await queueNotificationEmail({
+                to: recipients,
+                subject,
+                html,
+                type: 'overdue'
+              });
             }
           } catch (e) {
             console.warn('Overdue check handler:', e);

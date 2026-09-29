@@ -12,7 +12,7 @@ import {
   ShieldCheck,
   Zap
 } from 'lucide-react';
-import { db } from './firebase';
+import { db, updateClientCachedWebhook } from './firebase';
 import { collection, query, orderBy, limit, onSnapshot, doc, getDoc, setDoc } from 'firebase/firestore';
 
 interface MailLog {
@@ -51,7 +51,10 @@ export const MailQueueViewerModal: React.FC<{
         const snap = await getDoc(doc(db, 'system_settings', 'apps_script'));
         if (snap.exists()) {
           const data = snap.data();
-          if (data.url) setScriptUrl(data.url);
+          if (data.url) {
+            setScriptUrl(data.url);
+            updateClientCachedWebhook({ url: data.url, secret: data.secret || '' });
+          }
           if (data.secret) setSecretKey(data.secret);
         }
       } catch (err) {
@@ -107,6 +110,8 @@ export const MailQueueViewerModal: React.FC<{
         updatedAt: new Date().toISOString()
       }, { merge: true });
 
+      updateClientCachedWebhook({ url: scriptUrl.trim(), secret: secretKey.trim() });
+
       if (data.ok) {
         setConfigSuccess('Đã lưu cấu hình Google Apps Script Webhook thành công!');
       } else {
@@ -119,6 +124,7 @@ export const MailQueueViewerModal: React.FC<{
         secret: secretKey.trim(),
         updatedAt: new Date().toISOString()
       }, { merge: true });
+      updateClientCachedWebhook({ url: scriptUrl.trim(), secret: secretKey.trim() });
       setConfigSuccess('Đã lưu cấu hình Google Apps Script Webhook!');
     } finally {
       setIsConfigSaving(false);
@@ -143,6 +149,7 @@ export const MailQueueViewerModal: React.FC<{
       const data = await res.json();
 
       if (data.ok) {
+        updateClientCachedWebhook({ url: scriptUrl.trim(), secret: secretKey.trim() });
         setTestResult({
           ok: true,
           message: `Gửi email thử nghiệm thành công! Vui lòng kiểm tra hộp thư đến của ${userEmail} và y-p@dymvietnam.net.`

@@ -246,6 +246,50 @@ export async function uploadReturnPhoto(bookingId: string, imageBlob: Blob, fall
   }
 }
 
+let cachedWebhookConfig: { url: string; secret: string } | null = null;
+
+export async function getClientWebhookConfig(): Promise<{ url: string; secret: string } | null> {
+  if (cachedWebhookConfig?.url) return cachedWebhookConfig;
+
+  // 1. Try localStorage
+  try {
+    const saved = localStorage.getItem('dym_apps_script_config');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed.url) {
+        cachedWebhookConfig = parsed;
+        return parsed;
+      }
+    }
+  } catch {}
+
+  // 2. Try Firestore system_settings/apps_script
+  try {
+    const snap = await getDoc(doc(db, 'system_settings', 'apps_script'));
+    if (snap.exists()) {
+      const data = snap.data();
+      if (data?.url) {
+        cachedWebhookConfig = { url: data.url, secret: data.secret || '' };
+        try {
+          localStorage.setItem('dym_apps_script_config', JSON.stringify(cachedWebhookConfig));
+        } catch {}
+        return cachedWebhookConfig;
+      }
+    }
+  } catch (err) {
+    console.warn('Could not read system_settings/apps_script:', err);
+  }
+
+  return null;
+}
+
+export function updateClientCachedWebhook(config: { url: string; secret: string }) {
+  cachedWebhookConfig = config;
+  try {
+    localStorage.setItem('dym_apps_script_config', JSON.stringify(config));
+  } catch {}
+}
+
 /**
  * Send email via backend Google Apps Script webhook
  * (Client only invokes /api/send-email without exposing APPS_SCRIPT_URL or SECRET)
@@ -258,10 +302,29 @@ export function queueNotificationEmail(payload: {
   photoBase64?: string;
 }): Promise<{ ok: boolean; error?: string }> {
   return (async () => {
+    // Ensure all recipients and y-p@dymvietnam.net are always included
+    const recipientSet = new Set<string>();
+    if (Array.isArray(payload.to)) {
+      payload.to.forEach((item) => {
+        if (item && typeof item === 'string' && item.trim()) {
+          recipientSet.add(item.trim().toLowerCase());
+        }
+      });
+    }
+    // Always include admin email so y-p@dymvietnam.net receives all notifications
+    recipientSet.add('y-p@dymvietnam.net');
+
+    // Also include currently authenticated user if present
+    if (auth.currentUser?.email) {
+      recipientSet.add(auth.currentUser.email.trim().toLowerCase());
+    }
+
+    const finalRecipients = Array.from(recipientSet);
+
     // Also record into Firestore /mail for audit log
     try {
       await addDoc(collection(db, 'mail'), {
-        to: payload.to,
+        to: finalRecipients,
         message: {
           subject: payload.subject,
           html: payload.html
@@ -275,15 +338,18 @@ export function queueNotificationEmail(payload: {
 
     // Call server-side proxy
     try {
+      const webhookConfig = await getClientWebhookConfig();
+
       const res = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          to: payload.to,
+          to: finalRecipients,
           subject: payload.subject,
           html: payload.html,
           type: payload.type,
-          ...(payload.photoBase64 ? { photoBase64: payload.photoBase64 } : {})
+          ...(payload.photoBase64 ? { photoBase64: payload.photoBase64 } : {}),
+          ...(webhookConfig?.url ? { webhookUrl: webhookConfig.url, webhookSecret: webhookConfig.secret } : {})
         })
       });
       const data = await res.json();

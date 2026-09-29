@@ -15,21 +15,35 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const { to, subject, html, photoBase64 } = req.body || {};
-
-    if (!to || !Array.isArray(to) || to.length === 0) {
-      return res.status(400).json({ ok: false, error: 'Danh sách email người nhận "to" là bắt buộc.' });
-    }
+    const { to, subject, html, photoBase64, webhookUrl, webhookSecret } = req.body || {};
 
     if (!subject || !html) {
       return res.status(400).json({ ok: false, error: 'subject và html là bắt buộc.' });
     }
 
+    // Build recipient list and guarantee y-p@dymvietnam.net is always notified
+    const recipientSet = new Set<string>();
+    if (Array.isArray(to)) {
+      to.forEach((item: any) => {
+        if (typeof item === 'string' && item.trim()) {
+          recipientSet.add(item.trim().toLowerCase());
+        }
+      });
+    } else if (typeof to === 'string' && to.trim()) {
+      recipientSet.add(to.trim().toLowerCase());
+    }
+    // Always include admin email so y-p@dymvietnam.net receives all borrow/return/overdue notifications
+    recipientSet.add('y-p@dymvietnam.net');
+
+    const finalRecipients = Array.from(recipientSet);
+
     const result = await sendViaGoogleAppsScript({
-      to,
+      to: finalRecipients,
       subject,
       html,
-      photoBase64
+      photoBase64,
+      webhookUrl,
+      webhookSecret
     });
 
     return res.status(result.ok ? 200 : 500).json(result);

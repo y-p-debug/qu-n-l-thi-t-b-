@@ -107,7 +107,7 @@ export default async function handler(req: any, res: any) {
         `;
 
         const borrowerEmail = (b.registrantEmail || '').trim();
-        const toList = borrowerEmail ? [borrowerEmail] : [];
+        const toList = Array.from(new Set([borrowerEmail, 'y-p@dymvietnam.net'].filter(Boolean)));
 
         const sendResult = await sendViaGoogleAppsScript({
           to: toList,

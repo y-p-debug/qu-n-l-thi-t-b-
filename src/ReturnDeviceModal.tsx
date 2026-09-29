@@ -88,8 +88,7 @@ export const ReturnDeviceModal: React.FC<ReturnDeviceModalProps> = ({
         returnPhotoUrl: downloadUrl
       });
 
-      // 4. Send Return Notification Email (non-blocking) with exact user requested layout
-      // Script automatically adds y-p@dymvietnam.net, only send borrower email
+      // 4. Send Return Notification Email to borrower & admin y-p@dymvietnam.net
       const emailContent = generateEmailHtml({
         actionType: 'return',
         booking: {
@@ -103,8 +102,10 @@ export const ReturnDeviceModal: React.FC<ReturnDeviceModalProps> = ({
       });
 
       const borrowerEmail = (booking.registrantEmail || '').trim();
-      queueNotificationEmail({
-        to: borrowerEmail ? [borrowerEmail] : [],
+      const recipients = Array.from(new Set([borrowerEmail, 'y-p@dymvietnam.net'].filter(Boolean)));
+
+      await queueNotificationEmail({
+        to: recipients,
         subject: emailContent.subject,
         html: emailContent.html,
         type: 'return',
