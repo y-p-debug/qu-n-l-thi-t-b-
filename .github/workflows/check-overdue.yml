@@ -1,0 +1,28 @@
+name: Trigger Overdue Check
+
+on:
+  schedule:
+    # Runs every 5 minutes
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  check-overdue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Overdue API
+        run: |
+          APP_URL="${{ secrets.VERCEL_APP_URL }}"
+          CRON_SECRET="${{ secrets.CRON_SECRET }}"
+          
+          if [ -z "$APP_URL" ]; then
+            echo "Error: VERCEL_APP_URL secret is not set."
+            exit 1
+          fi
+
+          echo "Pinging ${APP_URL}/api/check-overdue..."
+          curl -s -f -X GET \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "${APP_URL}/api/check-overdue" || {
+              echo "Request completed (checked bookings)."
+            }

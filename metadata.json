@@ -1,0 +1,7 @@
+{
+  "name": "Quản lý mượn thiết bị - 機器貸出管理",
+  "description": "Hệ thống quản lý mượn trả thiết bị công ty song ngữ Việt - Nhật (DYM Vietnam)",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
