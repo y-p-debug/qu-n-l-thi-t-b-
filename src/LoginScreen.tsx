@@ -1,17 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  Building2, 
   ShieldAlert, 
   ShieldCheck, 
   Camera, 
   Laptop, 
   Users, 
-  Volume2, 
-  VolumeX, 
   ChevronRight,
   ChevronLeft,
-  Sparkles,
-  RotateCcw
+  Sparkles
 } from 'lucide-react';
 import { ALLOWED_USERS_LIST } from './types';
 
@@ -20,40 +16,14 @@ interface LoginScreenProps {
   authError: string | null;
 }
 
-// 13 tệp ảnh gốc của người dùng được đặt sẵn trong repo public/assets/
-export const DEFAULT_ORIGINAL_IMAGES = [
-  'TKT01968.JPG',
-  'TKT01948.JPG',
-  'TKT01795.JPG',
-  'TKT01309.JPG',
-  'TKT01182.JPG',
-  'DSC06471.JPG',
-  'DSC06946.JPG',
-  'DSC07428.JPG',
-  'DSC07753.JPG',
-  'DSC07863.JPG',
-  '_N2K1748.jpg',
-  'TKT00800.JPG',
-  'TKT00988.JPG'
-];
-
-// Ảnh dự phòng đã xác minh có sẵn trong thư mục assets
-const VERIFIED_FALLBACK_IMAGES = [
-  '/assets/teambuilding_beach.jpg',
-  '/assets/office_team.jpg',
-  '/assets/teambuilding_gala.jpg',
-  '/assets/bg_logo.jpg'
-];
-
 interface CarouselItem {
   id: number;
   filename: string;
   src: string;
-  fallbackSrc: string;
 }
 
 /**
- * Thuật toán xáo trộn và chọn ngẫu nhiên 4 tấm
+ * Chọn ngẫu nhiên 4 tấm ảnh từ danh sách đọc từ /assets/assets.json
  */
 function pickRandomFourImages(imageList: string[]): CarouselItem[] {
   const shuffled = [...imageList].sort(() => Math.random() - 0.5);
@@ -61,42 +31,47 @@ function pickRandomFourImages(imageList: string[]): CarouselItem[] {
   return selected.map((filename, index) => ({
     id: index,
     filename,
-    src: `/assets/${filename}`,
-    fallbackSrc: VERIFIED_FALLBACK_IMAGES[index % VERIFIED_FALLBACK_IMAGES.length]
+    src: `/assets/${filename}`
   }));
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authError }) => {
-  // Trạng thái carousel: chỉ số ảnh đang hiển thị trung tâm (0 -> 3)
   const [currentIndex, setCurrentIndex] = useState<number>(0);
-  const [isVideoMuted, setIsVideoMuted] = useState<boolean>(true);
-  const [imagePool, setImagePool] = useState<string[]>(DEFAULT_ORIGINAL_IMAGES);
+  const [videoFailed, setVideoFailed] = useState<boolean>(false);
+  const [imagePool, setImagePool] = useState<string[]>([]);
+  const [backgroundLogo, setBackgroundLogo] = useState<string>('bg_logo.jpg');
+  const [activeFourImages, setActiveFourImages] = useState<CarouselItem[]>([]);
 
-  // Khởi tạo 4 ảnh ngẫu nhiên MỖI LẦN VÀO LINK / TẢI LẠI TRANG
-  const [activeFourImages, setActiveFourImages] = useState<CarouselItem[]>(() => {
-    return pickRandomFourImages(DEFAULT_ORIGINAL_IMAGES);
-  });
-
-  // Tải danh sách ảnh từ public/assets/assets.json nếu có
+  // Đọc danh sách ảnh và bg_logo.jpg từ /assets/assets.json
   useEffect(() => {
-    async function loadAssetsList() {
+    let isMounted = true;
+
+    async function loadAssetsFromJson() {
       try {
         const res = await fetch('/assets/assets.json');
-        if (res.ok) {
-          const data = await res.json();
-          if (data && Array.isArray(data.images) && data.images.length > 0) {
-            setImagePool(data.images);
-            setActiveFourImages(pickRandomFourImages(data.images));
-          }
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!isMounted) return;
+
+        if (Array.isArray(data?.images) && data.images.length > 0) {
+          setImagePool(data.images);
+          setActiveFourImages(pickRandomFourImages(data.images));
+        }
+        if (typeof data?.backgroundLogo === 'string' && data.backgroundLogo.trim()) {
+          setBackgroundLogo(data.backgroundLogo.trim());
         }
       } catch {
-        // Fallback sang danh sách 13 ảnh gốc mặc định trong code
+        // Không sử dụng nguồn thay thế ngoài assets.json
       }
     }
-    loadAssetsList();
+
+    loadAssetsFromJson();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  // Tự động xoay chuyển 4 ảnh tuần hoàn mượt mà mỗi 3.8s
+  // Tự động xoay chuyển 4 ảnh tuần hoàn mỗi 3.8s
   useEffect(() => {
     if (activeFourImages.length <= 1) return;
     const timer = setInterval(() => {
@@ -106,46 +81,40 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
   }, [activeFourImages.length]);
 
   const handlePrev = useCallback(() => {
-    setActiveFourImages(prevImages => {
+    setActiveFourImages((prevImages) => {
+      if (prevImages.length === 0) return prevImages;
       setCurrentIndex((prev) => (prev - 1 + prevImages.length) % prevImages.length);
       return prevImages;
     });
   }, []);
 
   const handleNext = useCallback(() => {
-    setActiveFourImages(prevImages => {
+    setActiveFourImages((prevImages) => {
+      if (prevImages.length === 0) return prevImages;
       setCurrentIndex((prev) => (prev + 1) % prevImages.length);
       return prevImages;
     });
   }, []);
 
-  // Đổi bộ 4 tấm ngẫu nhiên khác ngay lập tức
   const handleRandomizeFour = () => {
+    if (imagePool.length === 0) return;
     setActiveFourImages(pickRandomFourImages(imagePool));
     setCurrentIndex(0);
   };
 
   return (
     <div className="relative min-h-[calc(100vh-140px)] w-full flex items-center justify-center p-3 sm:p-6 lg:p-8 overflow-hidden rounded-3xl my-2">
-      {/* 
-        LAYER 1: Nền phía dưới là ảnh Logo DYM Vietnam navy blue nguyên bản 
-        kèm hiệu ứng Blur tầm 70%
-      */}
+      {/* LAYER 1: Nền phía dưới đọc bg_logo.jpg từ /assets/ thông qua assets.json */}
       <div className="absolute inset-0 z-0 overflow-hidden rounded-3xl">
         <img
-          src="/assets/bg_logo.jpg"
+          src={`/assets/${backgroundLogo}`}
           alt="DYM Vietnam Background"
-          referrerPolicy="no-referrer"
           className="w-full h-full object-cover scale-110 filter blur-[20px] opacity-70 brightness-75 transition-all duration-1000"
         />
         <div className="absolute inset-0 bg-gradient-to-tr from-slate-950/85 via-blue-950/70 to-slate-900/80 backdrop-blur-2xl" />
       </div>
 
-      {/* 
-        LAYER 2: Bố cục 2 cột
-        - Bên trái: Khung đăng nhập (Login Box)
-        - Bên phải: 2 vùng (Vùng 1: 3D Coverflow hiển thị ngẫu nhiên 4 tấm ảnh; Vùng 2: Video hoạt động)
-      */}
+      {/* LAYER 2: Bố cục 2 cột */}
       <div className="relative z-10 w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
         
         {/* CỘT TRÁI: Khung đăng nhập (5/12 cột) */}
@@ -156,9 +125,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-blue-700 via-indigo-600 to-sky-500 text-white flex items-center justify-center shadow-lg shadow-blue-600/30 p-2.5">
                   <img 
-                    src="/assets/bg_logo.jpg" 
+                    src={`/assets/${backgroundLogo}`} 
                     alt="DYM Logo Icon" 
-                    referrerPolicy="no-referrer"
                     className="w-full h-full object-contain rounded-xl"
                   />
                 </div>
@@ -259,18 +227,15 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
                 <span>Google Workspace DYM</span>
               </div>
 
-              <div className="flex items-center gap-1.5">
-                {/* Nút random 4 tấm ảnh khác ngay */}
-                <button
-                  type="button"
-                  onClick={handleRandomizeFour}
-                  className="px-2.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
-                  title="Random chọn 4 tấm ảnh khác từ kho ảnh"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-                  <span>Random 4 ảnh</span>
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={handleRandomizeFour}
+                className="px-2.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                title="Random chọn 4 tấm ảnh khác"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                <span>Random 4 ảnh</span>
+              </button>
             </div>
           </div>
         </div>
@@ -278,21 +243,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
         {/* CỘT PHẢI: 2 vùng (7/12 cột) */}
         <div className="lg:col-span-7 flex flex-col gap-5 justify-between">
           
-          {/* 
-            VÙNG 1 (TRÊN): 3D COVERFLOW SLIDER ANIMATION
-            - Luôn hiển thị ngẫu nhiên 4 tấm ảnh mỗi lần vào link
-            - Ảnh trung tâm phóng to (scale 1), ảnh 2 bên thu nhỏ (scale 0.84)
-            - Tuyệt đối KHÔNG có bất kỳ chữ nào đè lên ảnh
-            - Tuyệt đối KHÔNG chỉnh màu hay xử lý pixel của ảnh
-          */}
+          {/* VÙNG 1 (TRÊN): 3D COVERFLOW SLIDER ANIMATION */}
           <div className="relative h-64 sm:h-76 w-full rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-slate-950/70 backdrop-blur-xl flex items-center justify-center group px-3">
-            
-            {/* Carousel Track Container with Perspective */}
             <div className="relative w-full h-full flex items-center justify-center [perspective:1000px]">
               {activeFourImages.map((img, index) => {
                 const count = activeFourImages.length;
                 let offset = (index - currentIndex + count) % count;
-                if (offset === count - 1) offset = -1; // Item bên trái
+                if (offset === count - 1) offset = -1;
                 
                 const isCenter = offset === 0;
                 const isLeft = offset === -1;
@@ -320,17 +277,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
                     }}
                     className="absolute w-[68%] sm:w-[62%] h-[82%] sm:h-[86%] rounded-2xl overflow-hidden shadow-2xl transition-all duration-700 ease-out cursor-pointer border border-white/25 select-none bg-slate-900"
                   >
-                    {/* Ảnh nguyên bản 100%, không chỉnh màu, có fallback an toàn */}
                     <img
                       src={img.src}
                       alt={img.filename}
-                      referrerPolicy="no-referrer"
-                      onError={(e) => {
-                        const target = e.currentTarget;
-                        if (target.src !== img.fallbackSrc) {
-                          target.src = img.fallbackSrc;
-                        }
-                      }}
                       className="w-full h-full object-cover rounded-2xl"
                     />
                   </div>
@@ -356,7 +305,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
               <ChevronRight className="w-4 h-4" />
             </button>
 
-            {/* 4 Chấm tròn Pagination tương ứng đúng 4 tấm ảnh ngẫu nhiên */}
+            {/* 4 Chấm tròn Pagination */}
             <div className="absolute bottom-3.5 z-30 flex items-center gap-2">
               {activeFourImages.map((_, i) => (
                 <button
@@ -374,37 +323,23 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
           </div>
 
           {/* 
-            VÙNG 2 (DƯỚI): VIDEO HOẠT ĐỘNG NGUYÊN BẢN
-            - Tự động phát lặp video trong public/assets/teambuilding.mp4
-            - KHÔNG có bất kỳ chữ nào đè lên video
-            - Có nút bật/tắt âm thanh tiện lợi
+            VÙNG 2 (DƯỚI): KHUNG VIDEO GÓC DƯỚI BÊN PHẢI
+            - Phát trực tiếp /assets/dym-v2.mp4 giữ nguyên bản gốc, không nén, không bộ lọc
+            - Nếu video không tải được thì ẩn khung video, không phát video thay thế
           */}
-          <div className="relative h-60 sm:h-72 w-full rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-slate-950 flex flex-col justify-end group">
-            <video
-              autoPlay
-              loop
-              muted={isVideoMuted}
-              playsInline
-              className="absolute inset-0 w-full h-full object-cover"
-              poster="/assets/teambuilding_beach.jpg"
-            >
-              <source src="/assets/teambuilding.mp4" type="video/mp4" />
-              <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" type="video/mp4" />
-              Trình duyệt không hỗ trợ phát video.
-            </video>
-
-            {/* Nút bật/tắt âm thanh nhỏ góc phải dưới */}
-            <div className="relative z-10 p-3.5 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setIsVideoMuted(!isVideoMuted)}
-                className="p-2.5 rounded-full bg-black/45 hover:bg-black/70 backdrop-blur-md border border-white/20 text-white transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-lg"
-                title={isVideoMuted ? 'Bật âm thanh' : 'Tắt âm thanh'}
-              >
-                {isVideoMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4 text-lime-400" />}
-              </button>
+          {!videoFailed && (
+            <div className="relative h-60 sm:h-72 w-full rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-slate-950">
+              <video
+                src="/assets/dym-v2.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                onError={() => setVideoFailed(true)}
+                className="object-cover w-full h-full"
+              ></video>
             </div>
-          </div>
+          )}
 
         </div>
 

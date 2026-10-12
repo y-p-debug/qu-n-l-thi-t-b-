@@ -15,9 +15,20 @@ export default async function handler(req: any, res: any) {
     if (fs.existsSync(assetsJsonPath)) {
       const content = fs.readFileSync(assetsJsonPath, 'utf8');
       const parsed = JSON.parse(content);
-      return res.json({ ok: true, files: parsed.images || [] });
+      return res.json({
+        ok: true,
+        files: Array.isArray(parsed.images) ? parsed.images : [],
+        video: typeof parsed.video === 'string' ? parsed.video : 'dym-v2.mp4',
+        backgroundLogo: typeof parsed.backgroundLogo === 'string' ? parsed.backgroundLogo : 'bg_logo.jpg'
+      });
     }
-    return res.json({ ok: true, files: [] });
+
+    return res.json({
+      ok: true,
+      files: [],
+      video: 'dym-v2.mp4',
+      backgroundLogo: 'bg_logo.jpg'
+    });
   } catch (error: unknown) {
     const errMsg = error instanceof Error ? error.message : String(error);
     return res.status(500).json({ ok: false, error: errMsg });
