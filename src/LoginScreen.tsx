@@ -17,37 +17,19 @@ interface LoginScreenProps {
 }
 
 interface CarouselItem {
-  id: number;
+  id: string;
   filename: string;
   src: string;
 }
 
-const DEFAULT_ASSET_IMAGES: string[] = [
-  'IMG_6485.jpg',
-  'IMG_6728.JPG',
-  'TKT00800.JPG',
-  'TKT00988.JPG',
-  'TKT01182.JPG',
-  'TKT01309.JPG',
-  'TKT01795.JPG',
-  'TKT01948.JPG',
-  'TKT01968.JPG',
-  '_N2K1748.jpg',
-  'DSC06471.JPG',
-  'DSC06946.JPG',
-  'DSC07428.JPG',
-  'DSC07753.JPG',
-  'DSC07863.JPG'
-];
-
 /**
- * Chọn ngẫu nhiên 4 tấm ảnh từ danh sách đọc từ /assets/assets.json
+ * Chọn ngẫu nhiên tối đa 4 tấm ảnh từ danh sách đọc từ /assets/assets.json
  */
 function pickRandomFourImages(imageList: string[]): CarouselItem[] {
   const shuffled = [...imageList].sort(() => Math.random() - 0.5);
   const selected = shuffled.slice(0, 4);
-  return selected.map((filename, index) => ({
-    id: index,
+  return selected.map((filename) => ({
+    id: filename,
     filename,
     src: `/assets/${filename}`
   }));
@@ -56,33 +38,39 @@ function pickRandomFourImages(imageList: string[]): CarouselItem[] {
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authError }) => {
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [videoFailed, setVideoFailed] = useState<boolean>(false);
-  const [imagePool, setImagePool] = useState<string[]>(DEFAULT_ASSET_IMAGES);
+  const [imagePool, setImagePool] = useState<string[]>([]);
+  const [failedSet, setFailedSet] = useState<Set<string>>(new Set());
   const [backgroundLogo, setBackgroundLogo] = useState<string>('bg_logo.jpg');
-  const [activeFourImages, setActiveFourImages] = useState<CarouselItem[]>(() =>
-    pickRandomFourImages(DEFAULT_ASSET_IMAGES)
-  );
+  const [activeFourImages, setActiveFourImages] = useState<CarouselItem[]>([]);
 
-  // Đọc danh sách ảnh và bg_logo.jpg từ /assets/assets.json
+  // Chỉ đọc danh sách ảnh và bg_logo.jpg từ /assets/assets.json
   useEffect(() => {
     let isMounted = true;
 
     async function loadAssetsFromJson() {
       try {
-        const res = await fetch('/assets/assets.json');
+        const res = await fetch(`/assets/assets.json?t=${Date.now()}`, { cache: 'no-store' });
         if (!res.ok) return;
         const data = await res.json();
         if (!isMounted) return;
 
-        if (Array.isArray(data?.images) && data.images.length > 0) {
-          const merged = Array.from(new Set([...data.images, ...DEFAULT_ASSET_IMAGES]));
-          setImagePool(merged);
-          setActiveFourImages(pickRandomFourImages(merged));
+        if (Array.isArray(data?.images)) {
+          const validNames = data.images.filter(
+            (item: unknown): item is string =>
+              typeof item === 'string' &&
+              item.trim().length > 0 &&
+              item !== 'bg_logo.jpg' &&
+              item !== 'dym-v2.mp4'
+          );
+          setImagePool(validNames);
+          setActiveFourImages(pickRandomFourImages(validNames));
+          setCurrentIndex(0);
         }
         if (typeof data?.backgroundLogo === 'string' && data.backgroundLogo.trim()) {
           setBackgroundLogo(data.backgroundLogo.trim());
         }
       } catch {
-        // Giữ nguyên danh sách DEFAULT_ASSET_IMAGES nếu không tải được assets.json
+        // Không làm lỗi giao diện nếu không đọc được assets.json
       }
     }
 
@@ -101,6 +89,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
     return () => clearInterval(timer);
   }, [activeFourImages.length]);
 
+  // Đảm bảo currentIndex luôn hợp lệ khi danh sách ảnh thay đổi (ví dụ khi bỏ qua ảnh lỗi)
+  useEffect(() => {
+    if (activeFourImages.length > 0 && currentIndex >= activeFourImages.length) {
+      setCurrentIndex(0);
+    }
+  }, [activeFourImages.length, currentIndex]);
+
   const handlePrev = useCallback(() => {
     setActiveFourImages((prevImages) => {
       if (prevImages.length === 0) return prevImages;
@@ -117,9 +112,41 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
     });
   }, []);
 
+  // Xử lý khi 1 ảnh không tải được: tự bỏ qua ảnh đó và bù ảnh khác trong danh sách (nếu còn)
+  const handleImageError = useCallback((failedFilename: string) => {
+    setFailedSet((prevFailed) => {
+      const nextFailed = new Set(prevFailed);
+      nextFailed.add(failedFilename);
+
+      setActiveFourImages((prevActive) => {
+        const remainingActive = prevActive.filter((item) => item.filename !== failedFilename);
+        const activeNames = new Set(remainingActive.map((item) => item.filename));
+
+        // Tìm các ảnh chưa lỗi và chưa nằm trong 4 ảnh đang hiển thị để bù vào đủ 4 ảnh
+        const candidates = imagePool.filter(
+          (name) => !nextFailed.has(name) && !activeNames.has(name)
+        );
+
+        if (candidates.length > 0 && remainingActive.length < 4) {
+          const randomCandidate = candidates[Math.floor(Math.random() * candidates.length)];
+          remainingActive.push({
+            id: randomCandidate,
+            filename: randomCandidate,
+            src: `/assets/${randomCandidate}`
+          });
+        }
+
+        return remainingActive;
+      });
+
+      return nextFailed;
+    });
+  }, [imagePool]);
+
   const handleRandomizeFour = () => {
-    if (imagePool.length === 0) return;
-    setActiveFourImages(pickRandomFourImages(imagePool));
+    const validPool = imagePool.filter((name) => !failedSet.has(name));
+    if (validPool.length === 0) return;
+    setActiveFourImages(pickRandomFourImages(validPool));
     setCurrentIndex(0);
   };
 
@@ -269,20 +296,17 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
             <div className="relative w-full h-full flex items-center justify-center [perspective:1000px]">
               {activeFourImages.map((img, index) => {
                 const count = activeFourImages.length;
-                let offset = (index - currentIndex + count) % count;
-                if (offset === count - 1) offset = -1;
-                
-                const isCenter = offset === 0;
-                const isLeft = offset === -1;
-                const isRight = offset === 1;
+                const safeCurrent = count > 0 ? currentIndex % count : 0;
+                let offset = count > 0 ? (index - safeCurrent + count) % count : 0;
+                if (count >= 3 && offset === count - 1) offset = -1;
 
-                if (!isCenter && !isLeft && !isRight) {
-                  return null;
-                }
+                const isCenter = offset === 0;
+                const isLeft = count >= 3 && offset === -1;
+                const isRight = count >= 2 && offset === 1;
 
                 return (
                   <div
-                    key={`${img.filename}-${img.id}`}
+                    key={img.filename}
                     onClick={() => {
                       if (isLeft) handlePrev();
                       if (isRight) handleNext();
@@ -292,9 +316,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
                         ? 'translateX(0%) scale(1) translateZ(0px)' 
                         : isLeft 
                         ? 'translateX(-44%) scale(0.84) translateZ(-80px)' 
-                        : 'translateX(44%) scale(0.84) translateZ(-80px)',
-                      zIndex: isCenter ? 20 : 10,
-                      opacity: isCenter ? 1 : 0.55,
+                        : isRight
+                        ? 'translateX(44%) scale(0.84) translateZ(-80px)'
+                        : 'translateX(0%) scale(0.7) translateZ(-120px)',
+                      zIndex: isCenter ? 20 : (isLeft || isRight) ? 10 : 0,
+                      opacity: isCenter ? 1 : (isLeft || isRight) ? 0.55 : 0,
+                      pointerEvents: (isCenter || isLeft || isRight) ? 'auto' : 'none',
                     }}
                     className="absolute w-[68%] sm:w-[62%] h-[82%] sm:h-[86%] rounded-2xl overflow-hidden shadow-2xl transition-all duration-700 ease-out cursor-pointer border border-white/25 select-none bg-slate-900"
                   >
@@ -303,12 +330,18 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
                       alt={img.filename}
                       onError={(e) => {
                         const target = e.currentTarget;
-                        if (target.src.endsWith('.JPG')) {
-                          target.src = target.src.slice(0, -4) + '.jpg';
-                        } else if (target.src.endsWith('.jpg') && !target.dataset.triedNoExt) {
-                          target.dataset.triedNoExt = '1';
-                          target.src = target.src.slice(0, -4);
+                        if (!target.dataset.triedAltCase) {
+                          target.dataset.triedAltCase = '1';
+                          if (img.filename.endsWith('.JPG')) {
+                            target.src = `/assets/${img.filename.slice(0, -4)}.jpg`;
+                            return;
+                          }
+                          if (img.filename.endsWith('.jpg')) {
+                            target.src = `/assets/${img.filename.slice(0, -4)}.JPG`;
+                            return;
+                          }
                         }
+                        handleImageError(img.filename);
                       }}
                       className="w-full h-full object-cover rounded-2xl"
                     />
@@ -337,16 +370,16 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
 
             {/* 4 Chấm tròn Pagination */}
             <div className="absolute bottom-3.5 z-30 flex items-center gap-2">
-              {activeFourImages.map((_, i) => (
+              {activeFourImages.map((img, i) => (
                 <button
-                  key={i}
+                  key={img.filename}
                   onClick={() => setCurrentIndex(i)}
                   className={`h-1.5 rounded-full transition-all cursor-pointer ${
                     currentIndex === i 
                       ? 'w-7 bg-lime-400 shadow-sm shadow-lime-400/50' 
                       : 'w-4 bg-white/40 hover:bg-white/70'
                   }`}
-                  title={`Ảnh ${i + 1} / 4`}
+                  title={`Ảnh ${i + 1} / ${activeFourImages.length}`}
                 />
               ))}
             </div>
