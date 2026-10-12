@@ -1,6 +1,24 @@
 import fs from 'fs';
 import path from 'path';
 
+const DEFAULT_IMAGES = [
+  'IMG_6485.jpg',
+  'IMG_6728.JPG',
+  'TKT00800.JPG',
+  'TKT00988.JPG',
+  'TKT01182.JPG',
+  'TKT01309.JPG',
+  'TKT01795.JPG',
+  'TKT01948.JPG',
+  'TKT01968.JPG',
+  '_N2K1748.jpg',
+  'DSC06471.JPG',
+  'DSC06946.JPG',
+  'DSC07428.JPG',
+  'DSC07753.JPG',
+  'DSC07863.JPG'
+];
+
 export default async function handler(req: any, res: any) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -15,9 +33,12 @@ export default async function handler(req: any, res: any) {
     if (fs.existsSync(assetsJsonPath)) {
       const content = fs.readFileSync(assetsJsonPath, 'utf8');
       const parsed = JSON.parse(content);
+      const files = Array.isArray(parsed.images)
+        ? Array.from(new Set([...parsed.images, ...DEFAULT_IMAGES]))
+        : DEFAULT_IMAGES;
       return res.json({
         ok: true,
-        files: Array.isArray(parsed.images) ? parsed.images : [],
+        files,
         video: typeof parsed.video === 'string' ? parsed.video : 'dym-v2.mp4',
         backgroundLogo: typeof parsed.backgroundLogo === 'string' ? parsed.backgroundLogo : 'bg_logo.jpg'
       });
@@ -25,7 +46,7 @@ export default async function handler(req: any, res: any) {
 
     return res.json({
       ok: true,
-      files: [],
+      files: DEFAULT_IMAGES,
       video: 'dym-v2.mp4',
       backgroundLogo: 'bg_logo.jpg'
     });

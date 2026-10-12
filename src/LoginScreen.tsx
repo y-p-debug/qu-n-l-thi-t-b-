@@ -22,6 +22,24 @@ interface CarouselItem {
   src: string;
 }
 
+const DEFAULT_ASSET_IMAGES: string[] = [
+  'IMG_6485.jpg',
+  'IMG_6728.JPG',
+  'TKT00800.JPG',
+  'TKT00988.JPG',
+  'TKT01182.JPG',
+  'TKT01309.JPG',
+  'TKT01795.JPG',
+  'TKT01948.JPG',
+  'TKT01968.JPG',
+  '_N2K1748.jpg',
+  'DSC06471.JPG',
+  'DSC06946.JPG',
+  'DSC07428.JPG',
+  'DSC07753.JPG',
+  'DSC07863.JPG'
+];
+
 /**
  * Chọn ngẫu nhiên 4 tấm ảnh từ danh sách đọc từ /assets/assets.json
  */
@@ -38,9 +56,11 @@ function pickRandomFourImages(imageList: string[]): CarouselItem[] {
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authError }) => {
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [videoFailed, setVideoFailed] = useState<boolean>(false);
-  const [imagePool, setImagePool] = useState<string[]>([]);
+  const [imagePool, setImagePool] = useState<string[]>(DEFAULT_ASSET_IMAGES);
   const [backgroundLogo, setBackgroundLogo] = useState<string>('bg_logo.jpg');
-  const [activeFourImages, setActiveFourImages] = useState<CarouselItem[]>([]);
+  const [activeFourImages, setActiveFourImages] = useState<CarouselItem[]>(() =>
+    pickRandomFourImages(DEFAULT_ASSET_IMAGES)
+  );
 
   // Đọc danh sách ảnh và bg_logo.jpg từ /assets/assets.json
   useEffect(() => {
@@ -54,14 +74,15 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
         if (!isMounted) return;
 
         if (Array.isArray(data?.images) && data.images.length > 0) {
-          setImagePool(data.images);
-          setActiveFourImages(pickRandomFourImages(data.images));
+          const merged = Array.from(new Set([...data.images, ...DEFAULT_ASSET_IMAGES]));
+          setImagePool(merged);
+          setActiveFourImages(pickRandomFourImages(merged));
         }
         if (typeof data?.backgroundLogo === 'string' && data.backgroundLogo.trim()) {
           setBackgroundLogo(data.backgroundLogo.trim());
         }
       } catch {
-        // Không sử dụng nguồn thay thế ngoài assets.json
+        // Giữ nguyên danh sách DEFAULT_ASSET_IMAGES nếu không tải được assets.json
       }
     }
 

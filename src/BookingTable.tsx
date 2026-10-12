@@ -67,19 +67,11 @@ export const BookingTable: React.FC<BookingTableProps> = ({
   return (
     <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/80 overflow-hidden">
       {/* Table Header & Controls */}
-      <div className="p-5 border-b border-slate-200 bg-slate-50/70 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-              <span>Danh sách mượn thiết bị • 貸出一覧</span>
-              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700">
-                {filteredBookings.length} bản ghi
-              </span>
-            </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Cập nhật tức thời thời gian thực (Realtime Firestore onSnapshot)
-            </p>
-          </div>
+      <div className="p-4 sm:p-5 border-b border-slate-200 bg-slate-50/70 space-y-3.5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 className="text-base sm:text-lg font-bold text-slate-800">
+            Danh sách mượn thiết bị • 貸出一覧
+          </h3>
 
           {/* Quick status summary counts */}
           <div className="flex items-center gap-2 text-xs">

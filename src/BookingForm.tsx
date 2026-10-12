@@ -319,23 +319,13 @@ export const BookingForm: React.FC<BookingFormProps> = ({
   return (
     <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/80">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-sky-700 px-6 py-5 text-white flex items-center justify-between rounded-t-2xl">
-        <div>
-          <h2 className="text-xl font-bold flex items-center gap-2 tracking-tight">
-            <Calendar className="w-5 h-5 text-blue-200" />
-            Đăng ký mượn thiết bị • 機器貸出登録
-          </h2>
-          <p className="text-xs text-blue-100/90 mt-1">
-            Vui lòng điền đầy đủ các thông tin mượn bên dưới (DYM Vietnam)
-          </p>
-        </div>
-        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-white/10 rounded-full text-xs text-blue-100 border border-white/15">
-          <ShieldCheck className="w-4 h-4 text-emerald-300" />
-          <span>Chống trùng lịch tự động</span>
-        </div>
+      <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-sky-700 px-4 sm:px-6 py-3 text-white flex items-center rounded-t-2xl">
+        <p className="text-xs sm:text-sm font-medium text-blue-50">
+          Vui lòng điền đầy đủ các thông tin mượn bên dưới (DYM Vietnam)
+        </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="p-6 space-y-6">
+      <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-5">
         {/* Date and Time Row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* 日付 Ngày */}
@@ -424,14 +414,9 @@ export const BookingForm: React.FC<BookingFormProps> = ({
 
           {/* チーム Team */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5 text-blue-600" />
-                <span>チーム Team <span className="text-rose-500">*</span></span>
-              </span>
-              <span className="text-[10px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full font-semibold border border-blue-200">
-                Tự lọc mem
-              </span>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider flex items-center gap-1.5 min-h-[22px]">
+              <Users className="w-3.5 h-3.5 text-blue-600" />
+              <span>チーム Team <span className="text-rose-500">*</span></span>
             </label>
             <select
               value={team}
@@ -449,14 +434,9 @@ export const BookingForm: React.FC<BookingFormProps> = ({
 
           {/* 登録者名 Người đăng ký (Có ô tìm kiếm đánh chữ + liên kết 2 chiều với Team) */}
           <div className="relative" ref={dropdownRef}>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <UserCheck className="w-3.5 h-3.5 text-blue-600" />
-                <span>登録者名 Người đăng ký <span className="text-rose-500">*</span></span>
-              </span>
-              <span className="text-[10px] text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full font-semibold border border-indigo-200">
-                Gõ chữ tìm nhanh
-              </span>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider flex items-center gap-1.5 min-h-[22px]">
+              <UserCheck className="w-3.5 h-3.5 text-blue-600" />
+              <span>登録者名 Người đăng ký <span className="text-rose-500">*</span></span>
             </label>
 
             {/* Custom Searchable Dropdown Trigger */}
