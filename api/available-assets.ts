@@ -39,7 +39,7 @@ export default async function handler(req: any, res: any) {
       return res.json({
         ok: true,
         files,
-        video: typeof parsed.video === 'string' ? parsed.video : 'dym-v2.mp4',
+        video: typeof parsed.video === 'string' ? parsed.video : 'DYM V2 のコピー.mp4',
         backgroundLogo: typeof parsed.backgroundLogo === 'string' ? parsed.backgroundLogo : 'bg_logo.jpg'
       });
     }
@@ -47,7 +47,7 @@ export default async function handler(req: any, res: any) {
     return res.json({
       ok: true,
       files: DEFAULT_IMAGES,
-      video: 'dym-v2.mp4',
+      video: 'DYM V2 のコピー.mp4',
       backgroundLogo: 'bg_logo.jpg'
     });
   } catch (error: unknown) {

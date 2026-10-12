@@ -37,7 +37,6 @@ function pickRandomFourImages(imageList: string[]): CarouselItem[] {
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authError }) => {
   const [currentIndex, setCurrentIndex] = useState<number>(0);
-  const [videoFailed, setVideoFailed] = useState<boolean>(false);
   const [imagePool, setImagePool] = useState<string[]>([]);
   const [failedSet, setFailedSet] = useState<Set<string>>(new Set());
   const [backgroundLogo, setBackgroundLogo] = useState<string>('bg_logo.jpg');
@@ -60,7 +59,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
               typeof item === 'string' &&
               item.trim().length > 0 &&
               item !== 'bg_logo.jpg' &&
-              item !== 'dym-v2.mp4'
+              item !== 'DYM V2 のコピー.mp4'
           );
           setImagePool(validNames);
           setActiveFourImages(pickRandomFourImages(validNames));
@@ -387,22 +386,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
 
           {/* 
             VÙNG 2 (DƯỚI): KHUNG VIDEO GÓC DƯỚI BÊN PHẢI
-            - Phát trực tiếp /assets/dym-v2.mp4 giữ nguyên bản gốc, không nén, không bộ lọc
-            - Nếu video không tải được thì ẩn khung video, không phát video thay thế
+            - Phát trực tiếp /assets/DYM V2 のコピー.mp4
           */}
-          {!videoFailed && (
-            <div className="relative h-60 sm:h-72 w-full rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-slate-950">
-              <video
-                src="/assets/dym-v2.mp4"
-                autoPlay
-                loop
-                muted
-                playsInline
-                onError={() => setVideoFailed(true)}
-                className="object-cover w-full h-full"
-              ></video>
-            </div>
-          )}
+          <div className="relative h-60 sm:h-72 w-full rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-slate-950">
+            <video autoPlay loop muted playsInline preload="auto" className="w-full h-full object-cover" src={encodeURI("/assets/DYM V2 のコピー.mp4")} />
+          </div>
 
         </div>
 
