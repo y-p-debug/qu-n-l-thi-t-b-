@@ -280,6 +280,15 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
                     <img
                       src={img.src}
                       alt={img.filename}
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        if (target.src.endsWith('.JPG')) {
+                          target.src = target.src.slice(0, -4) + '.jpg';
+                        } else if (target.src.endsWith('.jpg') && !target.dataset.triedNoExt) {
+                          target.dataset.triedNoExt = '1';
+                          target.src = target.src.slice(0, -4);
+                        }
+                      }}
                       className="w-full h-full object-cover rounded-2xl"
                     />
                   </div>
