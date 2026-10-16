@@ -2,14 +2,17 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { 
   ShieldAlert, 
   ShieldCheck, 
-  Camera, 
-  Laptop, 
-  Users, 
   ChevronRight,
   ChevronLeft,
   Sparkles
 } from 'lucide-react';
-import { ALLOWED_USERS_LIST } from './types';
+
+/**
+ * HẰNG SỐ ĐỘ TRONG SUỐT (OPACITY) CỦA KHU VỰC ẢNH VÀ VIDEO TRÊN MÀN HÌNH ĐĂNG NHẬP
+ * Giá trị từ 0.0 (hoàn toàn mờ trong suốt) đến 1.0 (rõ nét hoàn toàn). Mặc định: 0.7
+ * Thay đổi số này để tăng/giảm độ mờ của slider ảnh và khung video.
+ */
+export const MEDIA_OPACITY = 0.7;
 
 interface LoginScreenProps {
   onGoogleSignIn: () => void;
@@ -150,9 +153,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
   };
 
   return (
-    <div className="relative w-screen min-h-dvh lg:h-dvh lg:overflow-hidden flex flex-col pt-[72px] pb-6 px-4 sm:px-6 lg:px-8">
+    <div className="relative w-screen h-dvh overflow-hidden flex flex-col justify-start items-center pt-[72px]">
       {/* LAYER 1: Nền phía dưới đọc bg_logo.jpg từ /assets/ thông qua assets.json, phủ kín 100% màn hình */}
-      <div className="absolute inset-0 z-0 overflow-hidden">
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <img
           src={`/assets/${backgroundLogo}`}
           alt="DYM Vietnam Background"
@@ -161,239 +164,220 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
         <div className="absolute inset-0 bg-gradient-to-tr from-slate-950/85 via-blue-950/70 to-slate-900/80 backdrop-blur-2xl" />
       </div>
 
-      {/* LAYER 2: Bố cục 2 cột chiếm hết phần còn lại của màn hình */}
-      <div className="relative z-10 w-full flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5 items-stretch">
-        
-        {/* CỘT TRÁI: Khung đăng nhập (4/12 cột, canh giữa theo chiều dọc) */}
-        <div className="lg:col-span-4 flex flex-col justify-center min-h-0">
-          <div className="bg-white/95 backdrop-blur-xl border border-white/40 shadow-2xl shadow-blue-950/50 rounded-3xl p-5 sm:p-6 xl:p-7 flex flex-col justify-between space-y-4 xl:space-y-5 transition-all hover:border-white/60">
-            {/* Logo & Header */}
-            <div>
-              <div className="flex items-center gap-3 mb-4 xl:mb-5">
-                <div className="w-12 h-12 xl:w-13 xl:h-13 rounded-2xl bg-gradient-to-tr from-blue-700 via-indigo-600 to-sky-500 text-white flex items-center justify-center shadow-lg shadow-blue-600/30 p-2.5 shrink-0">
-                  <img 
-                    src={`/assets/${backgroundLogo}`} 
-                    alt="DYM Logo Icon" 
-                    className="w-full h-full object-contain rounded-xl"
+      {/* 
+        LAYER 2: KHU VỰC ẢNH VÀ VIDEO 
+        - Nằm sát phía trên cùng, ngay dưới header (cách header 16px với pt-[72px])
+        - Cao khoảng 45% chiều cao màn hình (h-[45vh])
+        - Rộng gần hết chiều ngang, chừa lề 2 bên 24px (w-[calc(100%-48px)])
+        - Slider ảnh Coverflow bên trái (60%), Khung video bên phải (40%), khoảng cách 16px (gap-4)
+        - Độ trong suốt: MEDIA_OPACITY = 0.7
+      */}
+      <div 
+        style={{ opacity: MEDIA_OPACITY }}
+        className="relative z-10 w-[calc(100%-48px)] max-w-[1800px] h-[45vh] min-h-[220px] max-h-[500px] flex flex-col lg:flex-row gap-4 items-stretch justify-center transition-opacity duration-300 pointer-events-auto"
+      >
+        {/* Slider ảnh Coverflow (bên trái, rộng 60% trên màn hình lớn) */}
+        <div className="relative h-1/2 lg:h-full lg:w-[60%] w-full rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-slate-950/70 backdrop-blur-xl flex items-center justify-center group px-3">
+          <div className="relative w-full h-full flex items-center justify-center [perspective:1000px]">
+            {activeFourImages.map((img, index) => {
+              const count = activeFourImages.length;
+              const safeCurrent = count > 0 ? currentIndex % count : 0;
+              let offset = count > 0 ? (index - safeCurrent + count) % count : 0;
+              if (count >= 3 && offset === count - 1) offset = -1;
+
+              const isCenter = offset === 0;
+              const isLeft = count >= 3 && offset === -1;
+              const isRight = count >= 2 && offset === 1;
+
+              return (
+                <div
+                  key={img.filename}
+                  onClick={() => {
+                    if (isLeft) handlePrev();
+                    if (isRight) handleNext();
+                  }}
+                  style={{
+                    transform: isCenter 
+                      ? 'translateX(0%) scale(1) translateZ(0px)' 
+                      : isLeft 
+                      ? 'translateX(-44%) scale(0.84) translateZ(-80px)' 
+                      : isRight
+                      ? 'translateX(44%) scale(0.84) translateZ(-80px)'
+                      : 'translateX(0%) scale(0.7) translateZ(-120px)',
+                    zIndex: isCenter ? 20 : (isLeft || isRight) ? 10 : 0,
+                    opacity: isCenter ? 1 : (isLeft || isRight) ? 0.55 : 0,
+                    pointerEvents: (isCenter || isLeft || isRight) ? 'auto' : 'none',
+                  }}
+                  className="absolute w-[68%] sm:w-[62%] h-[84%] sm:h-[88%] rounded-2xl overflow-hidden shadow-2xl transition-all duration-700 ease-out cursor-pointer border border-white/25 select-none bg-slate-900"
+                >
+                  <img
+                    src={img.src}
+                    alt={img.filename}
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (!target.dataset.triedAltCase) {
+                        target.dataset.triedAltCase = '1';
+                        if (img.filename.endsWith('.JPG')) {
+                          target.src = `/assets/${img.filename.slice(0, -4)}.jpg`;
+                          return;
+                        }
+                        if (img.filename.endsWith('.jpg')) {
+                          target.src = `/assets/${img.filename.slice(0, -4)}.JPG`;
+                          return;
+                        }
+                      }
+                      handleImageError(img.filename);
+                    }}
+                    className="w-full h-full object-cover rounded-2xl"
                   />
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-extrabold text-lg text-slate-900 tracking-tight">
-                      DYM VIETNAM
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 tracking-wide">
-                      PORTAL
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 font-medium">
-                    機器貸出管理システム • Quản lý thiết bị
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <h2 className="text-xl xl:text-2xl font-black text-slate-900 tracking-tight">
-                  Chào mừng trở lại!
-                </h2>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Cổng đăng ký mượn & trả thiết bị chuyên dụng nội bộ (Máy ảnh Sony/Canon, Laptop dự phòng) cho toàn bộ thành viên <strong>DYM Vietnam</strong>.
-                </p>
-              </div>
-            </div>
-
-            {/* Error banner nếu bị từ chối đăng nhập */}
-            {authError && (
-              <div className="p-3 bg-rose-50 border border-rose-200 rounded-2xl text-left flex items-start gap-2.5 text-xs text-rose-800 animate-in shake">
-                <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-bold">Đăng nhập bị từ chối:</p>
-                  <p className="mt-0.5">{authError}</p>
-                </div>
-              </div>
-            )}
-
-            {/* Google Sign In Button */}
-            <div className="space-y-2.5">
-              <button
-                onClick={onGoogleSignIn}
-                className="w-full py-3 xl:py-3.5 px-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-2xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all flex items-center justify-center gap-3 text-sm active:scale-[0.99] cursor-pointer group"
-              >
-                <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center p-1 group-hover:scale-105 transition-transform shrink-0">
-                  <svg className="w-full h-full" viewBox="0 0 24 24">
-                    <path
-                      fill="#4285F4"
-                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                    />
-                    <path
-                      fill="#34A853"
-                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                    />
-                    <path
-                      fill="#FBBC05"
-                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                    />
-                    <path
-                      fill="#EA4335"
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                    />
-                  </svg>
-                </div>
-                <span className="truncate">Đăng nhập với Google (@dymvietnam.net)</span>
-                <ChevronRight className="w-4 h-4 ml-auto shrink-0 group-hover:translate-x-1 transition-transform" />
-              </button>
-
-              <p className="text-[11px] text-center text-slate-400">
-                Chỉ dành riêng cho cán bộ nhân viên thuộc hệ thống DYM Vietnam
-              </p>
-            </div>
-
-            {/* Quick feature list badge */}
-            <div className="pt-3 border-t border-slate-100 grid grid-cols-3 gap-2 text-center">
-              <div className="p-2 rounded-xl bg-slate-50 border border-slate-100 flex flex-col items-center">
-                <Camera className="w-4 h-4 text-blue-600 mb-1" />
-                <span className="text-[10px] font-bold text-slate-800">5 Máy ảnh</span>
-                <span className="text-[9px] text-slate-400">Kiểm tra lịch bận</span>
-              </div>
-              <div className="p-2 rounded-xl bg-slate-50 border border-slate-100 flex flex-col items-center">
-                <Laptop className="w-4 h-4 text-amber-600 mb-1" />
-                <span className="text-[10px] font-bold text-slate-800">Laptop dự phòng</span>
-                <span className="text-[9px] text-slate-400">Mật khẩu tự động</span>
-              </div>
-              <div className="p-2 rounded-xl bg-slate-50 border border-slate-100 flex flex-col items-center">
-                <Users className="w-4 h-4 text-emerald-600 mb-1" />
-                <span className="text-[10px] font-bold text-slate-800">Theo Team</span>
-                <span className="text-[9px] text-slate-400">{ALLOWED_USERS_LIST.length} thành viên</span>
-              </div>
-            </div>
-
-            {/* Thanh công cụ chân trang */}
-            <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-              <div className="flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Google Workspace DYM</span>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleRandomizeFour}
-                className="px-2.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
-                title="Random chọn 4 tấm ảnh khác"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-                <span>Random 4 ảnh</span>
-              </button>
-            </div>
+              );
+            })}
           </div>
-        </div>
 
-        {/* CỘT PHẢI: 2 vùng kéo giãn lấp đầy chiều cao còn lại (8/12 cột) */}
-        <div className="lg:col-span-8 flex flex-col gap-4 lg:gap-5 min-h-0 h-full">
-          
-          {/* VÙNG 1 (TRÊN): 3D COVERFLOW SLIDER ANIMATION */}
-          <div className="relative h-64 sm:h-80 lg:h-auto lg:flex-1 lg:min-h-0 w-full rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-slate-950/70 backdrop-blur-xl flex items-center justify-center group px-3">
-            <div className="relative w-full h-full flex items-center justify-center [perspective:1000px]">
-              {activeFourImages.map((img, index) => {
-                const count = activeFourImages.length;
-                const safeCurrent = count > 0 ? currentIndex % count : 0;
-                let offset = count > 0 ? (index - safeCurrent + count) % count : 0;
-                if (count >= 3 && offset === count - 1) offset = -1;
-
-                const isCenter = offset === 0;
-                const isLeft = count >= 3 && offset === -1;
-                const isRight = count >= 2 && offset === 1;
-
-                return (
-                  <div
-                    key={img.filename}
-                    onClick={() => {
-                      if (isLeft) handlePrev();
-                      if (isRight) handleNext();
-                    }}
-                    style={{
-                      transform: isCenter 
-                        ? 'translateX(0%) scale(1) translateZ(0px)' 
-                        : isLeft 
-                        ? 'translateX(-44%) scale(0.84) translateZ(-80px)' 
-                        : isRight
-                        ? 'translateX(44%) scale(0.84) translateZ(-80px)'
-                        : 'translateX(0%) scale(0.7) translateZ(-120px)',
-                      zIndex: isCenter ? 20 : (isLeft || isRight) ? 10 : 0,
-                      opacity: isCenter ? 1 : (isLeft || isRight) ? 0.55 : 0,
-                      pointerEvents: (isCenter || isLeft || isRight) ? 'auto' : 'none',
-                    }}
-                    className="absolute w-[68%] sm:w-[62%] h-[84%] sm:h-[88%] rounded-2xl overflow-hidden shadow-2xl transition-all duration-700 ease-out cursor-pointer border border-white/25 select-none bg-slate-900"
-                  >
-                    <img
-                      src={img.src}
-                      alt={img.filename}
-                      onError={(e) => {
-                        const target = e.currentTarget;
-                        if (!target.dataset.triedAltCase) {
-                          target.dataset.triedAltCase = '1';
-                          if (img.filename.endsWith('.JPG')) {
-                            target.src = `/assets/${img.filename.slice(0, -4)}.jpg`;
-                            return;
-                          }
-                          if (img.filename.endsWith('.jpg')) {
-                            target.src = `/assets/${img.filename.slice(0, -4)}.JPG`;
-                            return;
-                          }
-                        }
-                        handleImageError(img.filename);
-                      }}
-                      className="w-full h-full object-cover rounded-2xl"
-                    />
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Nút lùi / tới thủ công */}
+          {/* Thanh điều hướng: nút Prev, Dots chuyển slide, nút Next đặt ở góc trái dưới để KHÔNG bị thẻ đăng nhập che mất */}
+          <div className="absolute bottom-3 left-4 sm:left-6 z-30 flex items-center gap-2.5 bg-black/50 hover:bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 transition-all shadow-lg">
             <button
               type="button"
               onClick={handlePrev}
-              className="absolute left-2 z-30 p-2 rounded-full bg-black/40 hover:bg-black/70 text-white/80 hover:text-white backdrop-blur-md border border-white/20 transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
+              className="p-1 rounded-full text-white/80 hover:text-white transition-colors cursor-pointer"
               title="Ảnh trước"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <button
-              type="button"
-              onClick={handleNext}
-              className="absolute right-2 z-30 p-2 rounded-full bg-black/40 hover:bg-black/70 text-white/80 hover:text-white backdrop-blur-md border border-white/20 transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
-              title="Ảnh kế tiếp"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
 
-            {/* 4 Chấm tròn Pagination */}
-            <div className="absolute bottom-3 z-30 flex items-center gap-2">
+            <div className="flex items-center gap-1.5 px-1">
               {activeFourImages.map((img, i) => (
                 <button
                   key={img.filename}
                   onClick={() => setCurrentIndex(i)}
                   className={`h-1.5 rounded-full transition-all cursor-pointer ${
                     currentIndex === i 
-                      ? 'w-7 bg-lime-400 shadow-sm shadow-lime-400/50' 
-                      : 'w-4 bg-white/40 hover:bg-white/70'
+                      ? 'w-6 bg-lime-400 shadow-sm shadow-lime-400/50' 
+                      : 'w-2.5 bg-white/40 hover:bg-white/70'
                   }`}
                   title={`Ảnh ${i + 1} / ${activeFourImages.length}`}
                 />
               ))}
             </div>
-          </div>
 
-          {/* 
-            VÙNG 2 (DƯỚI): KHUNG VIDEO GÓC DƯỚI BÊN PHẢI
-            - Phát trực tiếp /assets/DYM V2 のコピー.mp4
-          */}
-          <div className="relative h-60 sm:h-72 lg:h-auto lg:flex-1 lg:min-h-0 w-full rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-slate-950">
-            <video autoPlay loop muted playsInline preload="auto" className="w-full h-full object-cover" src={encodeURI("/assets/DYM V2 のコピー.mp4")} />
+            <button
+              type="button"
+              onClick={handleNext}
+              className="p-1 rounded-full text-white/80 hover:text-white transition-colors cursor-pointer"
+              title="Ảnh kế tiếp"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
-
         </div>
 
+        {/* Khung video (bên phải, rộng 40% trên màn hình lớn, chiều cao bằng đúng slider) */}
+        <div className="relative h-1/2 lg:h-full lg:w-[40%] w-full rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-slate-950">
+          <video 
+            autoPlay 
+            loop 
+            muted 
+            playsInline 
+            preload="auto" 
+            className="w-full h-full object-cover" 
+            src={encodeURI("/assets/DYM V2 のコピー.mp4")} 
+          />
+        </div>
+      </div>
+
+      {/* 
+        LAYER 3: KHUNG ĐĂNG NHẬP 
+        - Đặt CHÍNH GIỮA trang theo cả chiều ngang và chiều dọc (top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2)
+        - NẰM ĐÈ LÊN dải ảnh/video (z-30 cao hơn dải media z-10)
+        - Đổ bóng nhẹ & viền sáng để nổi lên đẹp mắt (shadow-2xl shadow-blue-950/90 border border-white/60)
+        - Độ rộng khoảng 460px (w-[calc(100%-32px)] max-w-[460px])
+        - Không áp dụng MEDIA_OPACITY (giữ 100% độ sắc nét)
+      */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 w-[calc(100%-32px)] max-w-[460px] pointer-events-auto">
+        <div className="bg-white/95 backdrop-blur-2xl border border-white/60 shadow-2xl shadow-blue-950/90 rounded-3xl p-5 sm:p-6 flex flex-col space-y-4 transition-all hover:border-white/80">
+          {/* Logo & Header */}
+          <div className="space-y-2.5">
+            <div className="flex items-center gap-3.5">
+              <div className="w-15 h-15 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-blue-700 via-indigo-600 to-sky-500 text-white flex items-center justify-center shadow-lg shadow-blue-600/30 p-2.5 shrink-0">
+                <img 
+                  src={`/assets/${backgroundLogo}`} 
+                  alt="DYM Logo Icon" 
+                  className="w-full h-full object-contain rounded-xl"
+                />
+              </div>
+              <h1 className="font-black text-base sm:text-lg text-slate-900 tracking-tight leading-snug">
+                QUẢN LÝ THIẾT BỊ 事務代行
+              </h1>
+            </div>
+
+            <div>
+              <h2 className="text-sm sm:text-base font-bold text-slate-700 tracking-tight">
+                Chào mừng trở lại!
+              </h2>
+            </div>
+          </div>
+
+          {/* Error banner nếu bị từ chối đăng nhập */}
+          {authError && (
+            <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-2xl text-left flex items-start gap-2.5 text-xs text-rose-800 animate-in shake">
+              <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold">Đăng nhập bị từ chối:</p>
+                <p className="mt-0.5">{authError}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Google Sign In Button */}
+          <div>
+            <button
+              onClick={onGoogleSignIn}
+              className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-2xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all flex items-center justify-center gap-3 text-sm active:scale-[0.99] cursor-pointer group"
+            >
+              <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center p-1 group-hover:scale-105 transition-transform shrink-0">
+                <svg className="w-full h-full" viewBox="0 0 24 24">
+                  <path
+                    fill="#4285F4"
+                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                  />
+                  <path
+                    fill="#34A853"
+                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                  />
+                  <path
+                    fill="#FBBC05"
+                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                  />
+                  <path
+                    fill="#EA4335"
+                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                  />
+                </svg>
+              </div>
+              <span className="truncate">Đăng nhập với Google (@dymvietnam.net)</span>
+              <ChevronRight className="w-4 h-4 ml-auto shrink-0 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </div>
+
+          {/* Thanh công cụ chân trang */}
+          <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+            <div className="flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Google Workspace DYM</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleRandomizeFour}
+              className="px-2.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+              title="Random chọn 4 tấm ảnh khác"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+              <span>Random 4 ảnh</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

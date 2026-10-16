@@ -146,9 +146,9 @@ export const BookingTable: React.FC<BookingTableProps> = ({
         </div>
       </div>
 
-      {/* Table Content */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse text-xs">
+      {/* Table Content (Desktop / Tablet: cuộn trong khung bảng) */}
+      <div className="hidden md:block overflow-x-auto">
+        <table className="w-full text-left border-collapse text-xs min-w-[780px]">
           <thead>
             <tr className="bg-slate-100/80 text-slate-600 font-semibold uppercase tracking-wider border-b border-slate-200">
               <th className="py-3.5 px-4">Ngày 日付</th>
@@ -302,7 +302,7 @@ export const BookingTable: React.FC<BookingTableProps> = ({
                         <button
                           type="button"
                           onClick={() => onOpenReturnModal(b)}
-                          className="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-xl shadow-xs hover:shadow-md transition-all active:scale-95 flex items-center gap-1.5 ml-auto text-xs"
+                          className="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-xl shadow-xs hover:shadow-md transition-all active:scale-95 flex items-center gap-1.5 ml-auto text-xs cursor-pointer"
                         >
                           <RotateCcw className="w-3.5 h-3.5" />
                           <span>Trả thiết bị</span>
@@ -321,6 +321,139 @@ export const BookingTable: React.FC<BookingTableProps> = ({
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Card List (Hiển thị thẻ dễ đọc trên điện thoại) */}
+      <div className="md:hidden divide-y divide-slate-200">
+        {filteredBookings.length === 0 ? (
+          <div className="p-8 text-center text-slate-400">
+            <Filter className="w-8 h-8 mx-auto text-slate-300 stroke-[1.5] mb-2" />
+            <p className="text-sm font-medium">Không tìm thấy lượt mượn nào phù hợp với bộ lọc.</p>
+          </div>
+        ) : (
+          filteredBookings.map((b) => {
+            const isOverdue = isBookingOverdue(b);
+            const canReturn = !b.isReturned && (
+              b.registrantEmail.toLowerCase() === currentUserEmail.toLowerCase() ||
+              currentUserEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase()
+            );
+
+            return (
+              <div 
+                key={b.id} 
+                className={`p-4 space-y-3 transition-colors ${
+                  isOverdue 
+                    ? 'bg-rose-50/70' 
+                    : b.isReturned 
+                    ? 'bg-white' 
+                    : 'bg-blue-50/20'
+                }`}
+              >
+                {/* Header thẻ: Thiết bị + Trạng thái */}
+                <div className="flex items-center justify-between gap-2">
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold ${
+                    b.device === 'LAPTOP'
+                      ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                      : 'bg-slate-200 text-slate-800'
+                  }`}>
+                    {b.device === 'LAPTOP' ? <Laptop className="w-3.5 h-3.5" /> : <Camera className="w-3.5 h-3.5" />}
+                    {b.device}
+                  </span>
+
+                  {b.isReturned ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                      Đã trả
+                    </span>
+                  ) : isOverdue ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-200 text-rose-900 text-[11px] font-bold animate-pulse">
+                      <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
+                      QUÁ GIỜ CHƯA TRẢ
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[11px] font-semibold">
+                      Đang mượn
+                    </span>
+                  )}
+                </div>
+
+                {/* Ngày & Khung giờ */}
+                <div className="flex items-center gap-4 text-xs">
+                  <div className="flex items-center gap-1.5 font-semibold text-slate-900">
+                    <Calendar className="w-3.5 h-3.5 text-blue-600" />
+                    <span>{formatDateDisplay(b.date)}</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-slate-500 font-medium">
+                    <Clock className="w-3.5 h-3.5 text-slate-400" />
+                    <span>{b.startTime} - {b.endTime}</span>
+                  </div>
+                </div>
+
+                {/* Người đăng ký & Team */}
+                <div className="flex items-center justify-between gap-2 text-xs">
+                  <div className="min-w-0">
+                    <span className="font-bold text-slate-900">{b.registrantName}</span>
+                    <span className="text-slate-400 text-[11px] ml-1.5 truncate inline-block max-w-[140px] align-bottom">({b.registrantEmail})</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold border border-slate-200 shrink-0 text-[11px]">
+                    {b.team}
+                  </span>
+                </div>
+
+                {/* Mục đích */}
+                <div className="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                  <span className="font-semibold text-slate-700">Mục đích: </span>
+                  {b.purpose}
+                </div>
+
+                {/* Ảnh hoàn trả & Nút thao tác */}
+                <div className="flex items-center justify-between pt-1 gap-2">
+                  {b.isReturned ? (
+                    <div className="flex items-center gap-2">
+                      {b.returnPhotoUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setPreviewImageUrl(b.returnPhotoUrl || null)}
+                          className="group relative block w-9 h-9 rounded-lg overflow-hidden border border-emerald-300 shadow-xs hover:ring-2 hover:ring-emerald-400 transition-all cursor-pointer"
+                          title="Bấm để xem ảnh phóng to"
+                        >
+                          <img
+                            src={b.returnPhotoUrl}
+                            alt="Ảnh trả"
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/30 flex items-center justify-center text-white">
+                            <Eye className="w-3 h-3" />
+                          </div>
+                        </button>
+                      )}
+                      <span className="text-[10px] text-slate-400">
+                        {formatDateTimeDisplay(b.returnedAt)}
+                      </span>
+                    </div>
+                  ) : (
+                    <div />
+                  )}
+
+                  {canReturn ? (
+                    <button
+                      type="button"
+                      onClick={() => onOpenReturnModal(b)}
+                      className="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-xl shadow-xs active:scale-95 flex items-center gap-1.5 text-xs ml-auto cursor-pointer"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Trả thiết bị</span>
+                    </button>
+                  ) : b.isReturned ? (
+                    <span className="text-slate-400 text-[11px] italic">Hoàn tất</span>
+                  ) : (
+                    <span className="text-slate-400 text-[11px] italic">Chờ trả</span>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
 
       {/* Lightbox Modal for Photo Preview */}

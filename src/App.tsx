@@ -29,6 +29,7 @@ import {
 } from './types';
 import { BookingForm } from './BookingForm';
 import { BookingTable } from './BookingTable';
+import { ActiveBorrowingsCard } from './ActiveBorrowingsCard';
 import { ReturnDeviceModal } from './ReturnDeviceModal';
 import { DeploymentGuideModal } from './DeploymentGuideModal';
 import { MailQueueViewerModal } from './MailQueueViewerModal';
@@ -45,7 +46,8 @@ import {
   Sparkles,
   RefreshCw,
   AlertCircle,
-  Mail
+  Mail,
+  ClipboardList
 } from 'lucide-react';
 
 export default function App() {
@@ -60,6 +62,9 @@ export default function App() {
 
   // Return modal state
   const [selectedBookingForReturn, setSelectedBookingForReturn] = useState<BookingRecord | null>(null);
+
+  // Active Tab state: 'register' (TAB 1: Đăng ký mượn) | 'history' (TAB 2: Lịch sử mượn)
+  const [activeTab, setActiveTab] = useState<'register' | 'history'>('register');
 
   // Deployment guide modal
   const [showGuideModal, setShowGuideModal] = useState<boolean>(false);
@@ -191,6 +196,17 @@ export default function App() {
     }
   };
 
+  // Count unreturned bookings of current user for Tab 1 badge
+  const userActiveBookingsCount = bookings.filter((b) => {
+    if (b.isReturned) return false;
+    const email = currentUser?.email?.toLowerCase();
+    const emailMatch = b.registrantEmail && email && b.registrantEmail.toLowerCase() === email;
+    const nameMatch = b.registrantName && currentUserName && b.registrantName.trim().toLowerCase() === currentUserName.trim().toLowerCase();
+    const userObj = ALLOWED_USERS_LIST.find((u) => u.email.toLowerCase() === email);
+    const userObjNameMatch = userObj && b.registrantName && b.registrantName.trim().toLowerCase() === userObj.name.trim().toLowerCase();
+    return emailMatch || nameMatch || userObjNameMatch;
+  }).length;
+
   const isLoginView = !isAuthLoading && !currentUser;
 
   return (
@@ -216,43 +232,29 @@ export default function App() {
               : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between'
           }
         >
-          {/* Logo & App Title */}
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-blue-700 via-indigo-600 to-sky-500 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
-              <Laptop className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span
-                  className={
-                    isLoginView
-                      ? 'font-extrabold text-base sm:text-lg text-white tracking-tight'
-                      : 'font-extrabold text-base sm:text-lg text-slate-900 tracking-tight'
-                  }
-                >
-                  Quản lý mượn thiết bị
-                </span>
-                <span
-                  className={
-                    isLoginView
-                      ? 'hidden sm:inline-block text-[11px] font-semibold text-blue-200 bg-blue-500/20 px-2 py-0.5 rounded-full border border-blue-400/30'
-                      : 'hidden sm:inline-block text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200/70'
-                  }
-                >
-                  DYM Vietnam
-                </span>
+          {/* Logo & App Title: Ẩn trên màn hình đăng nhập, giữ nguyên sau khi đăng nhập */}
+          {!isLoginView ? (
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-blue-700 via-indigo-600 to-sky-500 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
+                <Laptop className="w-5 h-5" />
               </div>
-              <p
-                className={
-                  isLoginView
-                    ? 'text-xs text-slate-300 font-medium tracking-wide'
-                    : 'text-xs text-slate-500 font-medium tracking-wide'
-                }
-              >
-                機器貸出管理システム (Song ngữ Việt – Nhật)
-              </p>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-extrabold text-base sm:text-lg text-slate-900 tracking-tight">
+                    Quản lý mượn thiết bị
+                  </span>
+                  <span className="hidden sm:inline-block text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200/70">
+                    DYM Vietnam
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 font-medium tracking-wide">
+                  機器貸出管理システム (Song ngữ Việt – Nhật)
+                </p>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div />
+          )}
 
           {/* Right Header: User profile or Sign In */}
           <div className="flex items-center gap-2 sm:gap-3">
@@ -334,35 +336,105 @@ export default function App() {
           />
         </main>
       ) : (
-        /* State 3: User Authenticated (Full App Access) */
-        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
-          {/* Form Section */}
-          <section>
-            <BookingForm
-              currentUserEmail={currentUser.email || ''}
-              currentUserName={currentUserName}
-              activeBookings={bookings}
-              onBookingSuccess={() => {
-                // Realtime listener automatically updates
-              }}
-            />
-          </section>
+        /* State 3: User Authenticated (Full App Access) - Tách thành 2 TAB */
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+          {/* THANH ĐIỀU HƯỚNG 2 TAB */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1 border-b border-slate-200">
+            <div className="inline-flex p-1.5 bg-slate-200/80 backdrop-blur-xs rounded-2xl gap-1.5 shadow-inner self-start">
+              {/* TAB 1 */}
+              <button
+                type="button"
+                onClick={() => setActiveTab('register')}
+                className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                  activeTab === 'register'
+                    ? 'bg-white text-blue-700 shadow-md shadow-slate-300/60 scale-[1.01]'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                }`}
+              >
+                <Laptop className="w-4 h-4 text-blue-600" />
+                <span>Đăng ký mượn • 機器貸出登録</span>
+                {userActiveBookingsCount > 0 && (
+                  <span className="ml-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300 animate-pulse">
+                    {userActiveBookingsCount} đang giữ
+                  </span>
+                )}
+              </button>
 
-          {/* List & Table Section */}
-          <section>
-            {isDataLoading ? (
-              <div className="bg-white rounded-2xl p-12 text-center border border-slate-200">
-                <div className="inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-2" />
-                <p className="text-xs text-slate-500">Đang đồng bộ dữ liệu thời gian thực...</p>
-              </div>
-            ) : (
-              <BookingTable
-                bookings={bookings}
-                currentUserEmail={currentUser.email || ''}
-                onOpenReturnModal={(b) => setSelectedBookingForReturn(b)}
-              />
-            )}
-          </section>
+              {/* TAB 2 */}
+              <button
+                type="button"
+                onClick={() => setActiveTab('history')}
+                className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                  activeTab === 'history'
+                    ? 'bg-white text-blue-700 shadow-md shadow-slate-300/60 scale-[1.01]'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                }`}
+              >
+                <ClipboardList className="w-4 h-4 text-indigo-600" />
+                <span>Lịch sử mượn • 貸出一覧</span>
+                <span
+                  className={`ml-1 px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                    activeTab === 'history'
+                      ? 'bg-blue-100 text-blue-800'
+                      : 'bg-slate-300/70 text-slate-700'
+                  }`}
+                >
+                  {bookings.length}
+                </span>
+              </button>
+            </div>
+
+            <div className="hidden sm:flex items-center gap-2 text-xs text-slate-500 font-medium">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Dữ liệu thời gian thực Firestore</span>
+            </div>
+          </div>
+
+          {/* TAB 1: ĐĂNG KÝ MƯỢN */}
+          {activeTab === 'register' && (
+            <div className="max-w-[960px] mx-auto w-full space-y-6 animate-in fade-in duration-200">
+              {/* Form Đăng ký */}
+              <section>
+                <BookingForm
+                  currentUserEmail={currentUser.email || ''}
+                  currentUserName={currentUserName}
+                  activeBookings={bookings}
+                  onBookingSuccess={() => {
+                    // Realtime listener automatically updates
+                  }}
+                  onViewHistory={() => setActiveTab('history')}
+                />
+              </section>
+
+              {/* Khối "Thiết bị bạn đang mượn" (chỉ hiện nếu người đăng nhập đang có thiết bị chưa trả) */}
+              <section>
+                <ActiveBorrowingsCard
+                  currentUserEmail={currentUser.email || ''}
+                  currentUserName={currentUserName}
+                  bookings={bookings}
+                  onOpenReturnModal={(b) => setSelectedBookingForReturn(b)}
+                />
+              </section>
+            </div>
+          )}
+
+          {/* TAB 2: LỊCH SỬ MƯỢN */}
+          {activeTab === 'history' && (
+            <div className="w-full space-y-6 animate-in fade-in duration-200">
+              {isDataLoading ? (
+                <div className="bg-white rounded-2xl p-12 text-center border border-slate-200">
+                  <div className="inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-2" />
+                  <p className="text-xs text-slate-500">Đang đồng bộ dữ liệu thời gian thực...</p>
+                </div>
+              ) : (
+                <BookingTable
+                  bookings={bookings}
+                  currentUserEmail={currentUser.email || ''}
+                  onOpenReturnModal={(b) => setSelectedBookingForReturn(b)}
+                />
+              )}
+            </div>
+          )}
         </main>
       )}
 

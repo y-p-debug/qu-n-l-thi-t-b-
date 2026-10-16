@@ -16,7 +16,8 @@ import {
   Search,
   ChevronDown,
   X,
-  Check
+  Check,
+  Sparkles
 } from 'lucide-react';
 import { 
   DEVICE_LIST, 
@@ -38,13 +39,15 @@ interface BookingFormProps {
   currentUserName: string;
   activeBookings: BookingRecord[];
   onBookingSuccess: () => void;
+  onViewHistory?: () => void;
 }
 
 export const BookingForm: React.FC<BookingFormProps> = ({
   currentUserEmail,
   currentUserName,
   activeBookings,
-  onBookingSuccess
+  onBookingSuccess,
+  onViewHistory
 }) => {
   const todayStr = new Date().toISOString().split('T')[0];
 
@@ -317,15 +320,19 @@ export const BookingForm: React.FC<BookingFormProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/80">
+    <div className="w-full bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/80 overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-sky-700 px-4 sm:px-6 py-3 text-white flex items-center rounded-t-2xl">
-        <p className="text-xs sm:text-sm font-medium text-blue-50">
-          Vui lòng điền đầy đủ các thông tin mượn bên dưới (DYM Vietnam)
+      <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-sky-700 px-5 py-3.5 text-white flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-blue-200" />
+          <span className="text-sm font-bold tracking-tight">Đăng ký mượn thiết bị • 機器貸出登録</span>
+        </div>
+        <p className="text-xs text-blue-100 hidden sm:block font-medium">
+          DYM Vietnam Co., Ltd.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-5">
+      <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
         {/* Date and Time Row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* 日付 Ngày */}
@@ -634,12 +641,23 @@ export const BookingForm: React.FC<BookingFormProps> = ({
 
         {/* Success message */}
         {successMessage && (
-          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-start gap-3 text-xs text-emerald-800 animate-in fade-in">
-            <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-bold">Thành công:</p>
-              <p>{successMessage}</p>
+          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-emerald-800 animate-in fade-in">
+            <div className="flex items-start gap-3">
+              <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold">Thành công:</p>
+                <p>{successMessage}</p>
+              </div>
             </div>
+            {onViewHistory && (
+              <button
+                type="button"
+                onClick={onViewHistory}
+                className="shrink-0 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition-colors cursor-pointer self-start sm:self-center shadow-xs"
+              >
+                Xem trong Lịch sử mượn →
+              </button>
+            )}
           </div>
         )}
 
