@@ -150,9 +150,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
   };
 
   return (
-    <div className="relative min-h-[calc(100vh-140px)] w-full flex items-center justify-center p-3 sm:p-6 lg:p-8 overflow-hidden rounded-3xl my-2">
-      {/* LAYER 1: Nền phía dưới đọc bg_logo.jpg từ /assets/ thông qua assets.json */}
-      <div className="absolute inset-0 z-0 overflow-hidden rounded-3xl">
+    <div className="relative w-screen min-h-dvh lg:h-dvh lg:overflow-hidden flex flex-col pt-[72px] pb-6 px-4 sm:px-6 lg:px-8">
+      {/* LAYER 1: Nền phía dưới đọc bg_logo.jpg từ /assets/ thông qua assets.json, phủ kín 100% màn hình */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
         <img
           src={`/assets/${backgroundLogo}`}
           alt="DYM Vietnam Background"
@@ -161,16 +161,16 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
         <div className="absolute inset-0 bg-gradient-to-tr from-slate-950/85 via-blue-950/70 to-slate-900/80 backdrop-blur-2xl" />
       </div>
 
-      {/* LAYER 2: Bố cục 2 cột */}
-      <div className="relative z-10 w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
+      {/* LAYER 2: Bố cục 2 cột chiếm hết phần còn lại của màn hình */}
+      <div className="relative z-10 w-full flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5 items-stretch">
         
-        {/* CỘT TRÁI: Khung đăng nhập (5/12 cột) */}
-        <div className="lg:col-span-5 flex flex-col justify-center">
-          <div className="bg-white/95 backdrop-blur-xl border border-white/40 shadow-2xl shadow-blue-950/50 rounded-3xl p-6 sm:p-8 flex flex-col justify-between space-y-6 transition-all hover:border-white/60">
+        {/* CỘT TRÁI: Khung đăng nhập (4/12 cột, canh giữa theo chiều dọc) */}
+        <div className="lg:col-span-4 flex flex-col justify-center min-h-0">
+          <div className="bg-white/95 backdrop-blur-xl border border-white/40 shadow-2xl shadow-blue-950/50 rounded-3xl p-5 sm:p-6 xl:p-7 flex flex-col justify-between space-y-4 xl:space-y-5 transition-all hover:border-white/60">
             {/* Logo & Header */}
             <div>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-blue-700 via-indigo-600 to-sky-500 text-white flex items-center justify-center shadow-lg shadow-blue-600/30 p-2.5">
+              <div className="flex items-center gap-3 mb-4 xl:mb-5">
+                <div className="w-12 h-12 xl:w-13 xl:h-13 rounded-2xl bg-gradient-to-tr from-blue-700 via-indigo-600 to-sky-500 text-white flex items-center justify-center shadow-lg shadow-blue-600/30 p-2.5 shrink-0">
                   <img 
                     src={`/assets/${backgroundLogo}`} 
                     alt="DYM Logo Icon" 
@@ -192,8 +192,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+              <div className="space-y-1.5">
+                <h2 className="text-xl xl:text-2xl font-black text-slate-900 tracking-tight">
                   Chào mừng trở lại!
                 </h2>
                 <p className="text-xs text-slate-600 leading-relaxed">
@@ -204,7 +204,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
 
             {/* Error banner nếu bị từ chối đăng nhập */}
             {authError && (
-              <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-left flex items-start gap-2.5 text-xs text-rose-800 animate-in shake">
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-2xl text-left flex items-start gap-2.5 text-xs text-rose-800 animate-in shake">
                 <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
                 <div>
                   <p className="font-bold">Đăng nhập bị từ chối:</p>
@@ -214,12 +214,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
             )}
 
             {/* Google Sign In Button */}
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               <button
                 onClick={onGoogleSignIn}
-                className="w-full py-3.5 px-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-2xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all flex items-center justify-center gap-3 text-sm active:scale-[0.99] cursor-pointer group"
+                className="w-full py-3 xl:py-3.5 px-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-2xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all flex items-center justify-center gap-3 text-sm active:scale-[0.99] cursor-pointer group"
               >
-                <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center p-1 group-hover:scale-105 transition-transform">
+                <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center p-1 group-hover:scale-105 transition-transform shrink-0">
                   <svg className="w-full h-full" viewBox="0 0 24 24">
                     <path
                       fill="#4285F4"
@@ -239,8 +239,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
                     />
                   </svg>
                 </div>
-                <span>Đăng nhập với Google (@dymvietnam.net)</span>
-                <ChevronRight className="w-4 h-4 ml-auto group-hover:translate-x-1 transition-transform" />
+                <span className="truncate">Đăng nhập với Google (@dymvietnam.net)</span>
+                <ChevronRight className="w-4 h-4 ml-auto shrink-0 group-hover:translate-x-1 transition-transform" />
               </button>
 
               <p className="text-[11px] text-center text-slate-400">
@@ -249,18 +249,18 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
             </div>
 
             {/* Quick feature list badge */}
-            <div className="pt-4 border-t border-slate-100 grid grid-cols-3 gap-2 text-center">
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex flex-col items-center">
+            <div className="pt-3 border-t border-slate-100 grid grid-cols-3 gap-2 text-center">
+              <div className="p-2 rounded-xl bg-slate-50 border border-slate-100 flex flex-col items-center">
                 <Camera className="w-4 h-4 text-blue-600 mb-1" />
                 <span className="text-[10px] font-bold text-slate-800">5 Máy ảnh</span>
                 <span className="text-[9px] text-slate-400">Kiểm tra lịch bận</span>
               </div>
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex flex-col items-center">
+              <div className="p-2 rounded-xl bg-slate-50 border border-slate-100 flex flex-col items-center">
                 <Laptop className="w-4 h-4 text-amber-600 mb-1" />
                 <span className="text-[10px] font-bold text-slate-800">Laptop dự phòng</span>
                 <span className="text-[9px] text-slate-400">Mật khẩu tự động</span>
               </div>
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex flex-col items-center">
+              <div className="p-2 rounded-xl bg-slate-50 border border-slate-100 flex flex-col items-center">
                 <Users className="w-4 h-4 text-emerald-600 mb-1" />
                 <span className="text-[10px] font-bold text-slate-800">Theo Team</span>
                 <span className="text-[9px] text-slate-400">{ALLOWED_USERS_LIST.length} thành viên</span>
@@ -268,7 +268,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
             </div>
 
             {/* Thanh công cụ chân trang */}
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+            <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
               <div className="flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                 <span>Google Workspace DYM</span>
@@ -287,11 +287,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
           </div>
         </div>
 
-        {/* CỘT PHẢI: 2 vùng (7/12 cột) */}
-        <div className="lg:col-span-7 flex flex-col gap-5 justify-between">
+        {/* CỘT PHẢI: 2 vùng kéo giãn lấp đầy chiều cao còn lại (8/12 cột) */}
+        <div className="lg:col-span-8 flex flex-col gap-4 lg:gap-5 min-h-0 h-full">
           
           {/* VÙNG 1 (TRÊN): 3D COVERFLOW SLIDER ANIMATION */}
-          <div className="relative h-64 sm:h-76 w-full rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-slate-950/70 backdrop-blur-xl flex items-center justify-center group px-3">
+          <div className="relative h-64 sm:h-80 lg:h-auto lg:flex-1 lg:min-h-0 w-full rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-slate-950/70 backdrop-blur-xl flex items-center justify-center group px-3">
             <div className="relative w-full h-full flex items-center justify-center [perspective:1000px]">
               {activeFourImages.map((img, index) => {
                 const count = activeFourImages.length;
@@ -322,7 +322,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
                       opacity: isCenter ? 1 : (isLeft || isRight) ? 0.55 : 0,
                       pointerEvents: (isCenter || isLeft || isRight) ? 'auto' : 'none',
                     }}
-                    className="absolute w-[68%] sm:w-[62%] h-[82%] sm:h-[86%] rounded-2xl overflow-hidden shadow-2xl transition-all duration-700 ease-out cursor-pointer border border-white/25 select-none bg-slate-900"
+                    className="absolute w-[68%] sm:w-[62%] h-[84%] sm:h-[88%] rounded-2xl overflow-hidden shadow-2xl transition-all duration-700 ease-out cursor-pointer border border-white/25 select-none bg-slate-900"
                   >
                     <img
                       src={img.src}
@@ -368,7 +368,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
             </button>
 
             {/* 4 Chấm tròn Pagination */}
-            <div className="absolute bottom-3.5 z-30 flex items-center gap-2">
+            <div className="absolute bottom-3 z-30 flex items-center gap-2">
               {activeFourImages.map((img, i) => (
                 <button
                   key={img.filename}
@@ -388,7 +388,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
             VÙNG 2 (DƯỚI): KHUNG VIDEO GÓC DƯỚI BÊN PHẢI
             - Phát trực tiếp /assets/DYM V2 のコピー.mp4
           */}
-          <div className="relative h-60 sm:h-72 w-full rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-slate-950">
+          <div className="relative h-60 sm:h-72 lg:h-auto lg:flex-1 lg:min-h-0 w-full rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-slate-950">
             <video autoPlay loop muted playsInline preload="auto" className="w-full h-full object-cover" src={encodeURI("/assets/DYM V2 のコピー.mp4")} />
           </div>
 

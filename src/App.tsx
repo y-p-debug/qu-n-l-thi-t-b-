@@ -25,7 +25,8 @@ import { generateEmailHtml } from './emailTemplates';
 import { 
   BookingRecord, 
   ADMIN_EMAIL, 
-  ALLOWED_USERS_LIST 
+  ALLOWED_USERS_LIST,
+  isUserAdmin
 } from './types';
 import { BookingForm } from './BookingForm';
 import { BookingTable } from './BookingTable';
@@ -191,26 +192,65 @@ export default function App() {
     }
   };
 
+  const isLoginView = !isAuthLoading && !currentUser;
+  const isAdmin = isUserAdmin(currentUser?.email);
+
   return (
-    <div className="min-h-screen bg-slate-100/70 text-slate-800 flex flex-col font-sans selection:bg-blue-600 selection:text-white">
+    <div
+      className={
+        isLoginView
+          ? 'w-screen min-h-dvh lg:h-dvh lg:overflow-hidden overflow-x-hidden bg-slate-950 text-slate-800 flex flex-col font-sans selection:bg-blue-600 selection:text-white relative'
+          : 'min-h-screen bg-slate-100/70 text-slate-800 flex flex-col font-sans selection:bg-blue-600 selection:text-white'
+      }
+    >
       {/* Top Navigation Bar */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <header
+        className={
+          isLoginView
+            ? 'fixed top-0 left-0 right-0 z-40 bg-slate-950/35 backdrop-blur-md border-b border-white/10'
+            : 'sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs'
+        }
+      >
+        <div
+          className={
+            isLoginView
+              ? 'w-full px-6 lg:px-8 h-14 flex items-center justify-between'
+              : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between'
+          }
+        >
           {/* Logo & App Title */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-700 via-indigo-600 to-sky-500 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-blue-700 via-indigo-600 to-sky-500 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
               <Laptop className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-extrabold text-base sm:text-lg text-slate-900 tracking-tight">
+                <span
+                  className={
+                    isLoginView
+                      ? 'font-extrabold text-base sm:text-lg text-white tracking-tight'
+                      : 'font-extrabold text-base sm:text-lg text-slate-900 tracking-tight'
+                  }
+                >
                   Quản lý mượn thiết bị
                 </span>
-                <span className="hidden sm:inline-block text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200/70">
+                <span
+                  className={
+                    isLoginView
+                      ? 'hidden sm:inline-block text-[11px] font-semibold text-blue-200 bg-blue-500/20 px-2 py-0.5 rounded-full border border-blue-400/30'
+                      : 'hidden sm:inline-block text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200/70'
+                  }
+                >
                   DYM Vietnam
                 </span>
               </div>
-              <p className="text-xs text-slate-500 font-medium tracking-wide">
+              <p
+                className={
+                  isLoginView
+                    ? 'text-xs text-slate-300 font-medium tracking-wide'
+                    : 'text-xs text-slate-500 font-medium tracking-wide'
+                }
+              >
                 機器貸出管理システム (Song ngữ Việt – Nhật)
               </p>
             </div>
@@ -218,23 +258,28 @@ export default function App() {
 
           {/* Right Header: User profile or Sign In */}
           <div className="flex items-center gap-2 sm:gap-3">
-            <button
-              onClick={() => setShowMailQueueModal(true)}
-              className="text-xs text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-xl border border-blue-200 transition-colors flex items-center gap-1.5 font-medium"
-              title="Xem danh sách email đã tạo và gửi tới y-p@dymvietnam.net"
-            >
-              <Mail className="w-4 h-4 text-blue-600" />
-              <span className="hidden md:inline">Hàng đợi Email</span>
-            </button>
+            {/* Hàng đợi Email & Hướng dẫn: Chỉ hiển thị duy nhất khi tài khoản admin y-p@dymvietnam.net đăng nhập */}
+            {isAdmin && (
+              <>
+                <button
+                  onClick={() => setShowMailQueueModal(true)}
+                  className="text-xs text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-xl border border-blue-200 transition-colors flex items-center gap-1.5 font-medium cursor-pointer"
+                  title="Xem danh sách email đã tạo và gửi tới y-p@dymvietnam.net (Chỉ Admin)"
+                >
+                  <Mail className="w-4 h-4 text-blue-600" />
+                  <span className="hidden md:inline">Hàng đợi Email</span>
+                </button>
 
-            <button
-              onClick={() => setShowGuideModal(true)}
-              className="text-xs text-slate-600 hover:text-blue-700 hover:bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 transition-colors flex items-center gap-1.5"
-              title="Hướng dẫn cấu hình Firebase & Rules"
-            >
-              <HelpCircle className="w-4 h-4 text-blue-600" />
-              <span className="hidden md:inline font-medium">Hướng dẫn & Rules</span>
-            </button>
+                <button
+                  onClick={() => setShowGuideModal(true)}
+                  className="text-xs text-slate-600 hover:text-blue-700 hover:bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 transition-colors flex items-center gap-1.5 cursor-pointer"
+                  title="Hướng dẫn cấu hình Firebase & Rules (Chỉ Admin)"
+                >
+                  <HelpCircle className="w-4 h-4 text-blue-600" />
+                  <span className="hidden md:inline font-medium">Hướng dẫn & Rules</span>
+                </button>
+              </>
+            )}
 
             {currentUser ? (
               <div className="flex items-center gap-3 pl-2 sm:pl-3 border-l border-slate-200">
@@ -272,52 +317,53 @@ export default function App() {
       </header>
 
       {/* Main Body */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
-        {/* State 1: Loading Auth */}
-        {isAuthLoading ? (
+      {isAuthLoading ? (
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
           <div className="py-24 text-center">
             <div className="inline-block w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mb-3" />
             <p className="text-sm font-semibold text-slate-600">Đang kiểm tra thông tin đăng nhập Google...</p>
           </div>
-        ) : !currentUser ? (
-          /* State 2: Not logged in - Redesigned login screen with blurred background, left login frame, and right dynamic media regions */
+        </main>
+      ) : !currentUser ? (
+        /* State 2: Not logged in - Fullscreen login screen with zero outer margins/borders */
+        <main className="flex-1 w-full h-full flex flex-col">
           <LoginScreen
             onGoogleSignIn={handleGoogleSignIn}
             authError={authError}
           />
-        ) : (
-          /* State 3: User Authenticated (Full App Access) */
-          <>
-            {/* Form Section */}
-            <section>
-              <BookingForm
-                currentUserEmail={currentUser.email || ''}
-                currentUserName={currentUserName}
-                activeBookings={bookings}
-                onBookingSuccess={() => {
-                  // Realtime listener automatically updates
-                }}
-              />
-            </section>
+        </main>
+      ) : (
+        /* State 3: User Authenticated (Full App Access) */
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+          {/* Form Section */}
+          <section>
+            <BookingForm
+              currentUserEmail={currentUser.email || ''}
+              currentUserName={currentUserName}
+              activeBookings={bookings}
+              onBookingSuccess={() => {
+                // Realtime listener automatically updates
+              }}
+            />
+          </section>
 
-            {/* List & Table Section */}
-            <section>
-              {isDataLoading ? (
-                <div className="bg-white rounded-2xl p-12 text-center border border-slate-200">
-                  <div className="inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-2" />
-                  <p className="text-xs text-slate-500">Đang đồng bộ dữ liệu thời gian thực...</p>
-                </div>
-              ) : (
-                <BookingTable
-                  bookings={bookings}
-                  currentUserEmail={currentUser.email || ''}
-                  onOpenReturnModal={(b) => setSelectedBookingForReturn(b)}
-                />
-              )}
-            </section>
-          </>
-        )}
-      </main>
+          {/* List & Table Section */}
+          <section>
+            {isDataLoading ? (
+              <div className="bg-white rounded-2xl p-12 text-center border border-slate-200">
+                <div className="inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-2" />
+                <p className="text-xs text-slate-500">Đang đồng bộ dữ liệu thời gian thực...</p>
+              </div>
+            ) : (
+              <BookingTable
+                bookings={bookings}
+                currentUserEmail={currentUser.email || ''}
+                onOpenReturnModal={(b) => setSelectedBookingForReturn(b)}
+              />
+            )}
+          </section>
+        </main>
+      )}
 
       {/* Return Device Modal with camera capture requirement */}
       {selectedBookingForReturn && (
@@ -341,13 +387,15 @@ export default function App() {
         />
       )}
 
-      {/* Footer */}
-      <footer className="mt-auto py-5 border-t border-slate-200 bg-white/70 text-center text-xs text-slate-500">
-        <p>Hệ thống Quản lý mượn thiết bị • DYM Vietnam Co., Ltd.</p>
-        <p className="text-[11px] text-slate-400 mt-1">
-          Hỗ trợ: CAMERA 1 - CAMERA 5 & LAPTOP • Tự động quét quá giờ & Chống mượn trùng Firestore Transaction
-        </p>
-      </footer>
+      {/* Footer (only shown when not on fullscreen LoginScreen) */}
+      {!isLoginView && (
+        <footer className="mt-auto py-5 border-t border-slate-200 bg-white/70 text-center text-xs text-slate-500">
+          <p>Hệ thống Quản lý mượn thiết bị • DYM Vietnam Co., Ltd.</p>
+          <p className="text-[11px] text-slate-400 mt-1">
+            Hỗ trợ: CAMERA 1 - CAMERA 5 & LAPTOP • Tự động quét quá giờ & Chống mượn trùng Firestore Transaction
+          </p>
+        </footer>
+      )}
     </div>
   );
 }

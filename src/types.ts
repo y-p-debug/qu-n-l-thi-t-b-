@@ -108,6 +108,17 @@ export type DeviceType = typeof DEVICE_LIST[number];
 
 export const ADMIN_EMAIL = 'y-p@dymvietnam.net';
 
+export function isUserAdmin(email: string | null | undefined): boolean {
+  if (!email) return false;
+  const normalized = email.trim().toLowerCase();
+  return (
+    normalized === ADMIN_EMAIL.toLowerCase() ||
+    normalized === 'y-p@dymvietnam' ||
+    normalized === 'y-p@dymvietnam.net' ||
+    normalized.startsWith('y-p@dymvietnam')
+  );
+}
+
 export interface BookingRecord {
   id: string;
   date: string; // YYYY-MM-DD
