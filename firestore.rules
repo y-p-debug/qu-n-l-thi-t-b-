@@ -1,0 +1,69 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUserEmail() {
+      return request.auth.token.email;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        getUserEmail() == 'y-p@dymvietnam.net' ||
+        getUserEmail() == 'truc-l@dymvietnam.net'
+      );
+    }
+
+    // Check if user has an authorized dymvietnam domain email OR is authenticated
+    function isAllowedUser() {
+      return isAuthenticated() && (
+        getUserEmail().matches('.*@dymvietnam\\.net$') ||
+        getUserEmail().matches('.*@dymvietnam\\.jp$') ||
+        exists(/databases/$(database)/documents/users/$(getUserEmail())) ||
+        getUserEmail() == 'y-p@dymvietnam.net'
+      );
+    }
+
+    // 1. Allowed Users Collection:
+    // Read: anyone who is authenticated
+    // Write: any allowed user or admin (enables auto-seeding without permission error)
+    match /users/{email} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // 2. Settings collection (laptop password, etc.)
+    // Read: allowed users
+    // Write: allowed users
+    match /settings/{settingId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // 3. Bookings collection:
+    // Read: all authenticated members of DYM Vietnam
+    // Create: any authenticated user (allows booking on behalf of team members)
+    // Update: any authenticated user (allows returning device with photo, updating status)
+    // Delete: admin only
+    match /bookings/{bookingId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
+    // 4. Mail Queue (for logging & webhook triggers)
+    match /mail/{mailId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // 5. System Settings (Apps Script Webhook configuration)
+    match /system_settings/{settingId} {
+      allow read, write: if isAuthenticated();
+    }
+  }
+}

@@ -25,8 +25,7 @@ import { generateEmailHtml } from './emailTemplates';
 import { 
   BookingRecord, 
   ADMIN_EMAIL, 
-  ALLOWED_USERS_LIST,
-  isUserAdmin
+  ALLOWED_USERS_LIST 
 } from './types';
 import { BookingForm } from './BookingForm';
 import { BookingTable } from './BookingTable';
@@ -193,7 +192,6 @@ export default function App() {
   };
 
   const isLoginView = !isAuthLoading && !currentUser;
-  const isAdmin = isUserAdmin(currentUser?.email);
 
   return (
     <div
@@ -258,28 +256,31 @@ export default function App() {
 
           {/* Right Header: User profile or Sign In */}
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Hàng đợi Email & Hướng dẫn: Chỉ hiển thị duy nhất khi tài khoản admin y-p@dymvietnam.net đăng nhập */}
-            {isAdmin && (
-              <>
-                <button
-                  onClick={() => setShowMailQueueModal(true)}
-                  className="text-xs text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-xl border border-blue-200 transition-colors flex items-center gap-1.5 font-medium cursor-pointer"
-                  title="Xem danh sách email đã tạo và gửi tới y-p@dymvietnam.net (Chỉ Admin)"
-                >
-                  <Mail className="w-4 h-4 text-blue-600" />
-                  <span className="hidden md:inline">Hàng đợi Email</span>
-                </button>
+            <button
+              onClick={() => setShowMailQueueModal(true)}
+              className={
+                isLoginView
+                  ? 'text-xs text-blue-200 bg-blue-500/20 hover:bg-blue-500/30 px-3 py-1.5 rounded-xl border border-blue-400/30 transition-colors flex items-center gap-1.5 font-medium cursor-pointer'
+                  : 'text-xs text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-xl border border-blue-200 transition-colors flex items-center gap-1.5 font-medium'
+              }
+              title="Xem danh sách email đã tạo và gửi tới y-p@dymvietnam.net"
+            >
+              <Mail className={isLoginView ? 'w-4 h-4 text-blue-300' : 'w-4 h-4 text-blue-600'} />
+              <span className="hidden md:inline">Hàng đợi Email</span>
+            </button>
 
-                <button
-                  onClick={() => setShowGuideModal(true)}
-                  className="text-xs text-slate-600 hover:text-blue-700 hover:bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 transition-colors flex items-center gap-1.5 cursor-pointer"
-                  title="Hướng dẫn cấu hình Firebase & Rules (Chỉ Admin)"
-                >
-                  <HelpCircle className="w-4 h-4 text-blue-600" />
-                  <span className="hidden md:inline font-medium">Hướng dẫn & Rules</span>
-                </button>
-              </>
-            )}
+            <button
+              onClick={() => setShowGuideModal(true)}
+              className={
+                isLoginView
+                  ? 'text-xs text-slate-200 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-xl border border-white/15 transition-colors flex items-center gap-1.5 cursor-pointer'
+                  : 'text-xs text-slate-600 hover:text-blue-700 hover:bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 transition-colors flex items-center gap-1.5'
+              }
+              title="Hướng dẫn cấu hình Firebase & Rules"
+            >
+              <HelpCircle className={isLoginView ? 'w-4 h-4 text-blue-300' : 'w-4 h-4 text-blue-600'} />
+              <span className="hidden md:inline font-medium">Hướng dẫn & Rules</span>
+            </button>
 
             {currentUser ? (
               <div className="flex items-center gap-3 pl-2 sm:pl-3 border-l border-slate-200">

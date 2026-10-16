@@ -20,7 +20,6 @@ import {
   onSnapshot, 
   runTransaction, 
   updateDoc, 
-  deleteDoc,
   addDoc,
   serverTimestamp,
   Firestore
@@ -32,7 +31,7 @@ import {
   getDownloadURL 
 } from 'firebase/storage';
 import localFirebaseConfig from '../firebase-applet-config.json';
-import { ALLOWED_USERS_LIST, BookingRecord, ADMIN_EMAIL, isUserAdmin } from './types';
+import { ALLOWED_USERS_LIST, BookingRecord } from './types';
 
 // Load configuration from VITE_ environment variables (Vercel) or fallback to local JSON
 const envFirebaseConfig = {
@@ -362,63 +361,4 @@ export function queueNotificationEmail(payload: {
       return { ok: false, error: errMsg };
     }
   })();
-}
-
-/**
- * Xóa một bản ghi lịch sử mượn trả từ Firestore.
- * Chỉ cho phép tài khoản Admin y-p@dymvietnam.net có quyền thực hiện.
- */
-export async function deleteBookingRecord(
-  bookingId: string, 
-  requesterEmail: string
-): Promise<{ ok: boolean; error?: string }> {
-  const currentEmail = (requesterEmail || auth.currentUser?.email || '').trim().toLowerCase();
-  if (!isUserAdmin(currentEmail)) {
-    return { 
-      ok: false, 
-      error: 'Quyền bị từ chối: Chỉ tài khoản admin y-p@dymvietnam.net mới có quyền xóa lịch sử mượn thiết bị.' 
-    };
-  }
-
-  try {
-    await deleteDoc(doc(db, 'bookings', bookingId));
-    return { ok: true };
-  } catch (error: unknown) {
-    const errMsg = error instanceof Error ? error.message : String(error);
-    console.error('Lỗi khi xóa bản ghi:', errMsg);
-    return { ok: false, error: errMsg };
-  }
-}
-
-/**
- * Xóa nhiều bản ghi lịch sử cùng lúc từ Firestore.
- * Chỉ cho phép tài khoản Admin y-p@dymvietnam.net có quyền thực hiện.
- */
-export async function batchDeleteBookingRecords(
-  bookingIds: string[], 
-  requesterEmail: string
-): Promise<{ ok: boolean; count: number; error?: string }> {
-  const currentEmail = (requesterEmail || auth.currentUser?.email || '').trim().toLowerCase();
-  if (!isUserAdmin(currentEmail)) {
-    return { 
-      ok: false, 
-      count: 0,
-      error: 'Quyền bị từ chối: Chỉ tài khoản admin y-p@dymvietnam.net mới có quyền xóa lịch sử mượn thiết bị.' 
-    };
-  }
-
-  try {
-    let deletedCount = 0;
-    for (const id of bookingIds) {
-      if (id) {
-        await deleteDoc(doc(db, 'bookings', id));
-        deletedCount++;
-      }
-    }
-    return { ok: true, count: deletedCount };
-  } catch (error: unknown) {
-    const errMsg = error instanceof Error ? error.message : String(error);
-    console.error('Lỗi khi xóa nhiều bản ghi:', errMsg);
-    return { ok: false, count: 0, error: errMsg };
-  }
 }

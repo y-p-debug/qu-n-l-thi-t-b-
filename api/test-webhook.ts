@@ -1,7 +1,45 @@
-var __defProp=Object.defineProperty;var __name=(target,value)=>__defProp(target,"name",{value,configurable:true});import{sendViaGoogleAppsScript}from"./_shared.js";async function handler(req,res){res.setHeader("Access-Control-Allow-Origin","*");res.setHeader("Access-Control-Allow-Methods","POST, OPTIONS");res.setHeader("Access-Control-Allow-Headers","Content-Type, Authorization");if(req.method==="OPTIONS"){return res.status(200).end()}if(req.method!=="POST"){return res.status(405).json({ok:false,error:"Method not allowed"})}try{const{targetEmail,url,secret}=req.body||{};const toRaw=targetEmail?[targetEmail,"y-p@dymvietnam.net"]:["y-p@dymvietnam.net"];const to=Array.from(new Set(toRaw.map(e=>e.trim().toLowerCase())));if(url)process.env.APPS_SCRIPT_URL=url.trim();if(secret)process.env.APPS_SCRIPT_SECRET=secret.trim();const testHtml=`
+import { sendViaGoogleAppsScript } from './_shared.js';
+
+export default async function handler(req: any, res: any) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ ok: false, error: 'Method not allowed' });
+  }
+
+  try {
+    const { targetEmail, url, secret } = req.body || {};
+    const toRaw = targetEmail ? [targetEmail, 'y-p@dymvietnam.net'] : ['y-p@dymvietnam.net'];
+    const to = Array.from(new Set(toRaw.map(e => e.trim().toLowerCase())));
+
+    if (url) process.env.APPS_SCRIPT_URL = url.trim();
+    if (secret) process.env.APPS_SCRIPT_SECRET = secret.trim();
+
+    const testHtml = `
       <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
-        <h2 style="color: #10b981;">[TH\u1EEC NGHI\u1EC6M TH\xC0NH C\xD4NG] Google Apps Script Webhook</h2>
-        <p>H\u1EC7 th\u1ED1ng Qu\u1EA3n l\xFD m\u01B0\u1EE3n thi\u1EBFt b\u1ECB DYM Vietnam \u0111\xE3 k\u1EBFt n\u1ED1i th\xE0nh c\xF4ng v\u1EDBi Google Apps Script c\u1EE7a b\u1EA1n.</p>
-        <p>Th\u1EDDi \u0111i\u1EC3m g\u1EEDi th\u1EED: <strong>${new Date().toLocaleString("vi-VN")}</strong></p>
+        <h2 style="color: #10b981;">[THỬ NGHIỆM THÀNH CÔNG] Google Apps Script Webhook</h2>
+        <p>Hệ thống Quản lý mượn thiết bị DYM Vietnam đã kết nối thành công với Google Apps Script của bạn.</p>
+        <p>Thời điểm gửi thử: <strong>${new Date().toLocaleString('vi-VN')}</strong></p>
       </div>
-    `;const result=await sendViaGoogleAppsScript({to,subject:"[DYM TEST] Ki\u1EC3m tra k\u1EBFt n\u1ED1i g\u1EEDi email qua Google Apps Script",html:testHtml,webhookUrl:url,webhookSecret:secret});return res.json(result)}catch(err){const msg=err instanceof Error?err.message:String(err);return res.status(500).json({ok:false,error:msg})}}__name(handler,"handler");export{handler as default};
+    `;
+
+    const result = await sendViaGoogleAppsScript({
+      to,
+      subject: '[DYM TEST] Kiểm tra kết nối gửi email qua Google Apps Script',
+      html: testHtml,
+      webhookUrl: url,
+      webhookSecret: secret
+    });
+
+    return res.json(result);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return res.status(500).json({ ok: false, error: msg });
+  }
+}

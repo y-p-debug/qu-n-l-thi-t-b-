@@ -22,6 +22,7 @@ const PORT = Number(process.env.PORT) || 3000;
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
+// Mount Vercel Serverless Function handlers for local development parity
 app.all('/api/send-email', (req, res) => sendEmailHandler(req, res));
 app.all('/api/check-overdue', (req, res) => checkOverdueHandler(req, res));
 app.all('/api/cron/check-overdue', (req, res) => checkOverdueHandler(req, res));
@@ -30,6 +31,7 @@ app.all('/api/configure-webhook', (req, res) => configureWebhookHandler(req, res
 app.all('/api/test-webhook', (req, res) => testWebhookHandler(req, res));
 app.all('/api/available-assets', (req, res) => availableAssetsHandler(req, res));
 
+// Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   if (err && (err.type === 'entity.too.large' || err.status === 413)) {
     return res.status(413).json({
@@ -40,6 +42,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   next(err);
 });
 
+// Setup dev server with Vite middlewares or static files for production
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({

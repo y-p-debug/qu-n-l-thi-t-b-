@@ -3,7 +3,7 @@ import path from 'path';
 
 const DEFAULT_IMAGES = [
   'IMG_6485.jpg',
-  'IMG_6728.jpg',
+  'IMG_6728.JPG',
   'TKT00800.JPG',
   'TKT00988.JPG',
   'TKT01182.JPG',
