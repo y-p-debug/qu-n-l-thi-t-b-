@@ -152,8 +152,224 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
     setCurrentIndex(0);
   };
 
+  // Renders the internal coverflow cards and navigation buttons
+  const renderCoverflowInner = (isMobile = false) => (
+    <>
+      <div className="relative w-full h-full flex items-center justify-center [perspective:1000px]">
+        {activeFourImages.map((img, index) => {
+          const count = activeFourImages.length;
+          const safeCurrent = count > 0 ? currentIndex % count : 0;
+          let offset = count > 0 ? (index - safeCurrent + count) % count : 0;
+          if (count >= 3 && offset === count - 1) offset = -1;
+
+          const isCenter = offset === 0;
+          const isLeft = count >= 3 && offset === -1;
+          const isRight = count >= 2 && offset === 1;
+
+          return (
+            <div
+              key={img.filename}
+              onClick={() => {
+                if (isLeft) handlePrev();
+                if (isRight) handleNext();
+              }}
+              style={{
+                transform: isCenter 
+                  ? 'translateX(0%) scale(1) translateZ(0px)' 
+                  : isLeft 
+                  ? 'translateX(-44%) scale(0.84) translateZ(-80px)' 
+                  : isRight
+                  ? 'translateX(44%) scale(0.84) translateZ(-80px)'
+                  : 'translateX(0%) scale(0.7) translateZ(-120px)',
+                zIndex: isCenter ? 20 : (isLeft || isRight) ? 10 : 0,
+                opacity: isCenter ? 1 : (isLeft || isRight) ? 0.55 : 0,
+                pointerEvents: (isCenter || isLeft || isRight) ? 'auto' : 'none',
+              }}
+              className={`absolute ${
+                isMobile ? 'w-[74%] h-[86%]' : 'w-[68%] sm:w-[62%] h-[84%] sm:h-[88%]'
+              } rounded-2xl overflow-hidden shadow-2xl transition-all duration-700 ease-out cursor-pointer border border-white/25 select-none bg-slate-900`}
+            >
+              <img
+                src={img.src}
+                alt={img.filename}
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (!target.dataset.triedAltCase) {
+                    target.dataset.triedAltCase = '1';
+                    if (img.filename.endsWith('.JPG')) {
+                      target.src = `/assets/${img.filename.slice(0, -4)}.jpg`;
+                      return;
+                    }
+                    if (img.filename.endsWith('.jpg')) {
+                      target.src = `/assets/${img.filename.slice(0, -4)}.JPG`;
+                      return;
+                    }
+                  }
+                  handleImageError(img.filename);
+                }}
+                className="w-full h-full object-cover rounded-2xl"
+              />
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Thanh điều hướng: nút Prev, Dots chuyển slide, nút Next */}
+      <div className={`absolute ${
+        isMobile ? 'top-2.5 left-3' : 'bottom-3 left-4 sm:left-6'
+      } z-30 flex items-center gap-1.5 sm:gap-2 bg-black/60 hover:bg-black/80 backdrop-blur-md px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full border border-white/25 transition-all shadow-lg`}>
+        <button
+          type="button"
+          onClick={handlePrev}
+          className="p-1 rounded-full text-white/80 hover:text-white transition-colors cursor-pointer"
+          title="Ảnh trước"
+        >
+          <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+        </button>
+
+        <div className="flex items-center gap-1.5 px-1">
+          {activeFourImages.map((img, i) => (
+            <button
+              key={img.filename}
+              onClick={() => setCurrentIndex(i)}
+              className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                currentIndex === i 
+                  ? 'w-5 sm:w-6 bg-lime-400 shadow-sm shadow-lime-400/50' 
+                  : 'w-2 sm:w-2.5 bg-white/40 hover:bg-white/70'
+              }`}
+              title={`Ảnh ${i + 1} / ${activeFourImages.length}`}
+            />
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={handleNext}
+          className="p-1 rounded-full text-white/80 hover:text-white transition-colors cursor-pointer"
+          title="Ảnh kế tiếp"
+        >
+          <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+        </button>
+      </div>
+    </>
+  );
+
+  // Video tag
+  const renderVideoTag = () => (
+    <video 
+      autoPlay 
+      loop 
+      muted 
+      playsInline 
+      preload="auto" 
+      className="w-full h-full object-cover"
+    >
+      <source src="/assets/dym-v2.mp4" type="video/mp4" />
+      <source src={encodeURI("/assets/DYM V2 のコピー.mp4")} type="video/mp4" />
+    </video>
+  );
+
+  // Login Card content
+  const renderLoginCardInner = (isMobile = false) => (
+    <div className={`bg-white/95 backdrop-blur-2xl border border-white/60 shadow-2xl shadow-blue-950/90 rounded-2xl sm:rounded-3xl ${
+      isMobile ? 'p-3.5 sm:p-5 space-y-3' : 'p-5 sm:p-6 space-y-4'
+    } flex flex-col transition-all hover:border-white/80`}>
+      {/* Logo & Header */}
+      <div className={isMobile ? 'space-y-1.5' : 'space-y-2.5'}>
+        <div className="flex items-center gap-2.5 sm:gap-3.5">
+          <div className={`${
+            isMobile ? 'w-11 h-11' : 'w-14 h-14 sm:w-16 sm:h-16'
+          } rounded-xl sm:rounded-2xl bg-gradient-to-tr from-blue-700 via-indigo-600 to-sky-500 text-white flex items-center justify-center shadow-lg shadow-blue-600/30 p-1.5 sm:p-2.5 shrink-0`}>
+            <img 
+              src={`/assets/${backgroundLogo}`} 
+              alt="DYM Logo Icon" 
+              className="w-full h-full object-contain rounded-lg sm:rounded-xl"
+            />
+          </div>
+          <h1 className={`${
+            isMobile ? 'text-xs sm:text-base font-black leading-tight' : 'font-black text-sm sm:text-lg leading-snug'
+          } text-slate-900 tracking-tight`}>
+            QUẢN LÝ THIẾT BỊ 事務代行
+          </h1>
+        </div>
+
+        <div>
+          <h2 className={`${
+            isMobile ? 'text-xs' : 'text-sm sm:text-base'
+          } font-bold text-slate-700 tracking-tight`}>
+            Chào mừng trở lại!
+          </h2>
+        </div>
+      </div>
+
+      {/* Error banner nếu bị từ chối đăng nhập */}
+      {authError && (
+        <div className="p-2 sm:p-2.5 bg-rose-50 border border-rose-200 rounded-xl sm:rounded-2xl text-left flex items-start gap-2 text-[11px] sm:text-xs text-rose-800 animate-in shake">
+          <ShieldAlert className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-bold">Đăng nhập bị từ chối:</p>
+            <p className="mt-0.5">{authError}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Google Sign In Button */}
+      <div>
+        <button
+          onClick={onGoogleSignIn}
+          className={`w-full ${
+            isMobile ? 'py-2 px-3 text-xs' : 'py-2.5 sm:py-3 px-3 sm:px-4 text-xs sm:text-sm'
+          } bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-xl sm:rounded-2xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all flex items-center justify-center gap-2 sm:gap-3 active:scale-[0.99] cursor-pointer group`}
+        >
+          <div className={`${
+            isMobile ? 'w-5 h-5' : 'w-5 h-5 sm:w-6 sm:h-6'
+          } rounded-full bg-white flex items-center justify-center p-0.5 sm:p-1 group-hover:scale-105 transition-transform shrink-0`}>
+            <svg className="w-full h-full" viewBox="0 0 24 24">
+              <path
+                fill="#4285F4"
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+              />
+            </svg>
+          </div>
+          <span className="truncate">Đăng nhập với Google (@dymvietnam.net)</span>
+          <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-auto shrink-0 group-hover:translate-x-1 transition-transform" />
+        </button>
+      </div>
+
+      {/* Thanh công cụ chân trang */}
+      <div className="pt-2 sm:pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+        <div className="flex items-center gap-1.5">
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+          <span className="truncate">Google Workspace DYM</span>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleRandomizeFour}
+          className="px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs text-[10px] sm:text-[11px]"
+          title="Random chọn 4 tấm ảnh khác"
+        >
+          <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-600" />
+          <span>Random 4 ảnh</span>
+        </button>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="relative w-screen h-dvh overflow-hidden flex flex-col justify-start items-center pt-[72px]">
+    <div className="relative w-full h-dvh overflow-hidden flex flex-col justify-start items-center md:pt-[72px]">
       {/* LAYER 1: Nền phía dưới đọc bg_logo.jpg từ /assets/ thông qua assets.json, phủ kín 100% màn hình */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <img
@@ -161,223 +377,68 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
           alt="DYM Vietnam Background"
           className="w-full h-full object-cover scale-110 filter blur-[20px] opacity-70 brightness-75 transition-all duration-1000"
         />
-        <div className="absolute inset-0 bg-gradient-to-tr from-slate-950/85 via-blue-950/70 to-slate-900/80 backdrop-blur-2xl" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-slate-950/90 via-blue-950/80 to-slate-900/90 backdrop-blur-2xl" />
       </div>
 
       {/* 
-        LAYER 2: KHU VỰC ẢNH VÀ VIDEO 
-        - Nằm sát phía trên cùng, ngay dưới header (cách header 16px với pt-[72px])
-        - Cao khoảng 45% chiều cao màn hình (h-[45vh])
-        - Rộng gần hết chiều ngang, chừa lề 2 bên 24px (w-[calc(100%-48px)])
-        - Slider ảnh Coverflow bên trái (60%), Khung video bên phải (40%), khoảng cách 16px (gap-4)
-        - Độ trong suốt: MEDIA_OPACITY = 0.7
+        MÀN HÌNH MÁY TÍNH / WEBSITE (md: trở lên >= 768px):
+        GIỮ NGUYÊN HOÀN TOÀN NHƯ CŨ:
+        - Dải ảnh + video sát phía trên cùng (h-[45vh], 60% / 40%, gap-4, MEDIA_OPACITY = 0.7)
+        - Thẻ đăng nhập absolute chính giữa màn hình (top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2, z-30, độ nét 100%)
       */}
       <div 
         style={{ opacity: MEDIA_OPACITY }}
-        className="relative z-10 w-[calc(100%-48px)] max-w-[1800px] h-[45vh] min-h-[220px] max-h-[500px] flex flex-col lg:flex-row gap-4 items-stretch justify-center transition-opacity duration-300 pointer-events-auto"
+        className="hidden md:flex relative z-10 w-[calc(100%-48px)] max-w-[1800px] h-[45vh] min-h-[220px] max-h-[500px] flex-row gap-4 items-stretch justify-center transition-opacity duration-300 pointer-events-auto"
       >
-        {/* Slider ảnh Coverflow (bên trái, rộng 60% trên màn hình lớn) */}
-        <div className="relative h-1/2 lg:h-full lg:w-[60%] w-full rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-slate-950/70 backdrop-blur-xl flex items-center justify-center group px-3">
-          <div className="relative w-full h-full flex items-center justify-center [perspective:1000px]">
-            {activeFourImages.map((img, index) => {
-              const count = activeFourImages.length;
-              const safeCurrent = count > 0 ? currentIndex % count : 0;
-              let offset = count > 0 ? (index - safeCurrent + count) % count : 0;
-              if (count >= 3 && offset === count - 1) offset = -1;
-
-              const isCenter = offset === 0;
-              const isLeft = count >= 3 && offset === -1;
-              const isRight = count >= 2 && offset === 1;
-
-              return (
-                <div
-                  key={img.filename}
-                  onClick={() => {
-                    if (isLeft) handlePrev();
-                    if (isRight) handleNext();
-                  }}
-                  style={{
-                    transform: isCenter 
-                      ? 'translateX(0%) scale(1) translateZ(0px)' 
-                      : isLeft 
-                      ? 'translateX(-44%) scale(0.84) translateZ(-80px)' 
-                      : isRight
-                      ? 'translateX(44%) scale(0.84) translateZ(-80px)'
-                      : 'translateX(0%) scale(0.7) translateZ(-120px)',
-                    zIndex: isCenter ? 20 : (isLeft || isRight) ? 10 : 0,
-                    opacity: isCenter ? 1 : (isLeft || isRight) ? 0.55 : 0,
-                    pointerEvents: (isCenter || isLeft || isRight) ? 'auto' : 'none',
-                  }}
-                  className="absolute w-[68%] sm:w-[62%] h-[84%] sm:h-[88%] rounded-2xl overflow-hidden shadow-2xl transition-all duration-700 ease-out cursor-pointer border border-white/25 select-none bg-slate-900"
-                >
-                  <img
-                    src={img.src}
-                    alt={img.filename}
-                    onError={(e) => {
-                      const target = e.currentTarget;
-                      if (!target.dataset.triedAltCase) {
-                        target.dataset.triedAltCase = '1';
-                        if (img.filename.endsWith('.JPG')) {
-                          target.src = `/assets/${img.filename.slice(0, -4)}.jpg`;
-                          return;
-                        }
-                        if (img.filename.endsWith('.jpg')) {
-                          target.src = `/assets/${img.filename.slice(0, -4)}.JPG`;
-                          return;
-                        }
-                      }
-                      handleImageError(img.filename);
-                    }}
-                    className="w-full h-full object-cover rounded-2xl"
-                  />
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Thanh điều hướng: nút Prev, Dots chuyển slide, nút Next đặt ở góc trái dưới để KHÔNG bị thẻ đăng nhập che mất */}
-          <div className="absolute bottom-3 left-4 sm:left-6 z-30 flex items-center gap-2.5 bg-black/50 hover:bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 transition-all shadow-lg">
-            <button
-              type="button"
-              onClick={handlePrev}
-              className="p-1 rounded-full text-white/80 hover:text-white transition-colors cursor-pointer"
-              title="Ảnh trước"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-
-            <div className="flex items-center gap-1.5 px-1">
-              {activeFourImages.map((img, i) => (
-                <button
-                  key={img.filename}
-                  onClick={() => setCurrentIndex(i)}
-                  className={`h-1.5 rounded-full transition-all cursor-pointer ${
-                    currentIndex === i 
-                      ? 'w-6 bg-lime-400 shadow-sm shadow-lime-400/50' 
-                      : 'w-2.5 bg-white/40 hover:bg-white/70'
-                  }`}
-                  title={`Ảnh ${i + 1} / ${activeFourImages.length}`}
-                />
-              ))}
-            </div>
-
-            <button
-              type="button"
-              onClick={handleNext}
-              className="p-1 rounded-full text-white/80 hover:text-white transition-colors cursor-pointer"
-              title="Ảnh kế tiếp"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
+        {/* Slider ảnh Coverflow bên trái (60%) */}
+        <div className="relative h-full w-[60%] rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-slate-950/70 backdrop-blur-xl flex items-center justify-center group px-3">
+          {renderCoverflowInner(false)}
         </div>
 
-        {/* Khung video (bên phải, rộng 40% trên màn hình lớn, chiều cao bằng đúng slider) */}
-        <div className="relative h-1/2 lg:h-full lg:w-[40%] w-full rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-slate-950">
-          <video 
-            autoPlay 
-            loop 
-            muted 
-            playsInline 
-            preload="auto" 
-            className="w-full h-full object-cover" 
-            src={encodeURI("/assets/DYM V2 のコピー.mp4")} 
-          />
+        {/* Khung video bên phải (40%) */}
+        <div className="relative h-full w-[40%] rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-slate-950">
+          {renderVideoTag()}
+        </div>
+      </div>
+
+      {/* Thẻ đăng nhập trên Desktop (absolute chính giữa trang, z-30) */}
+      <div className="hidden md:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 w-[calc(100%-32px)] max-w-[460px] pointer-events-auto">
+        {renderLoginCardInner(false)}
+      </div>
+
+      {/* 
+        MÀN HÌNH ĐIỆN THOẠI (< 768px / md:hidden) - 2 LỚP CHỐNG TRÀN TUYỆT ĐỐI (h-dvh, overflow-hidden):
+        
+        LỚP DƯỚI (NỀN MEDIA):
+        - Phủ kín toàn màn hình (inset-0, h-dvh, w-full, pt-14 pb-3 px-3.5)
+        - Chia đôi dọc: slider nửa trên (50%), video nửa dưới (50%), cách nhau 8-12px (gap-2.5)
+        - MEDIA_OPACITY = 0.7
+      */}
+      <div className="md:hidden absolute inset-0 z-10 w-full h-dvh pt-14 pb-3 px-3.5 flex flex-col gap-2.5 overflow-hidden pointer-events-auto">
+        {/* Nửa trên: Slider ảnh Coverflow */}
+        <div 
+          style={{ opacity: MEDIA_OPACITY }}
+          className="flex-1 min-h-0 w-full rounded-2xl overflow-hidden shadow-xl border border-white/20 bg-slate-950/70 backdrop-blur-xl relative flex items-center justify-center"
+        >
+          {renderCoverflowInner(true)}
+        </div>
+
+        {/* Nửa dưới: Khung Video */}
+        <div 
+          style={{ opacity: MEDIA_OPACITY }}
+          className="flex-1 min-h-0 w-full rounded-2xl overflow-hidden shadow-xl border border-white/20 bg-slate-950 relative"
+        >
+          {renderVideoTag()}
         </div>
       </div>
 
       {/* 
-        LAYER 3: KHUNG ĐĂNG NHẬP 
-        - Đặt CHÍNH GIỮA trang theo cả chiều ngang và chiều dọc (top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2)
-        - NẰM ĐÈ LÊN dải ảnh/video (z-30 cao hơn dải media z-10)
-        - Đổ bóng nhẹ & viền sáng để nổi lên đẹp mắt (shadow-2xl shadow-blue-950/90 border border-white/60)
-        - Độ rộng khoảng 460px (w-[calc(100%-32px)] max-w-[460px])
-        - Không áp dụng MEDIA_OPACITY (giữ 100% độ sắc nét)
+        LỚP TRÊN:
+        - Thẻ đăng nhập ĐÈ LÊN lớp nền, canh chính giữa cả ngang và dọc (top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2)
+        - z-30 cao hơn lớp nền, đổ bóng nhẹ, w-[90%] max-w-[420px], KHÔNG đặt opacity
       */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 w-[calc(100%-32px)] max-w-[460px] pointer-events-auto">
-        <div className="bg-white/95 backdrop-blur-2xl border border-white/60 shadow-2xl shadow-blue-950/90 rounded-3xl p-5 sm:p-6 flex flex-col space-y-4 transition-all hover:border-white/80">
-          {/* Logo & Header */}
-          <div className="space-y-2.5">
-            <div className="flex items-center gap-3.5">
-              <div className="w-15 h-15 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-blue-700 via-indigo-600 to-sky-500 text-white flex items-center justify-center shadow-lg shadow-blue-600/30 p-2.5 shrink-0">
-                <img 
-                  src={`/assets/${backgroundLogo}`} 
-                  alt="DYM Logo Icon" 
-                  className="w-full h-full object-contain rounded-xl"
-                />
-              </div>
-              <h1 className="font-black text-base sm:text-lg text-slate-900 tracking-tight leading-snug">
-                QUẢN LÝ THIẾT BỊ 事務代行
-              </h1>
-            </div>
-
-            <div>
-              <h2 className="text-sm sm:text-base font-bold text-slate-700 tracking-tight">
-                Chào mừng trở lại!
-              </h2>
-            </div>
-          </div>
-
-          {/* Error banner nếu bị từ chối đăng nhập */}
-          {authError && (
-            <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-2xl text-left flex items-start gap-2.5 text-xs text-rose-800 animate-in shake">
-              <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-bold">Đăng nhập bị từ chối:</p>
-                <p className="mt-0.5">{authError}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Google Sign In Button */}
-          <div>
-            <button
-              onClick={onGoogleSignIn}
-              className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-2xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all flex items-center justify-center gap-3 text-sm active:scale-[0.99] cursor-pointer group"
-            >
-              <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center p-1 group-hover:scale-105 transition-transform shrink-0">
-                <svg className="w-full h-full" viewBox="0 0 24 24">
-                  <path
-                    fill="#4285F4"
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                  />
-                  <path
-                    fill="#EA4335"
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                  />
-                </svg>
-              </div>
-              <span className="truncate">Đăng nhập với Google (@dymvietnam.net)</span>
-              <ChevronRight className="w-4 h-4 ml-auto shrink-0 group-hover:translate-x-1 transition-transform" />
-            </button>
-          </div>
-
-          {/* Thanh công cụ chân trang */}
-          <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-            <div className="flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Google Workspace DYM</span>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleRandomizeFour}
-              className="px-2.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
-              title="Random chọn 4 tấm ảnh khác"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-              <span>Random 4 ảnh</span>
-            </button>
-          </div>
-        </div>
+      <div className="md:hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 w-[90%] max-w-[420px] pointer-events-auto">
+        {renderLoginCardInner(true)}
       </div>
     </div>
   );

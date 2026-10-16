@@ -245,7 +245,7 @@ export default function App() {
     <div
       className={
         isLoginView
-          ? 'w-screen min-h-dvh lg:h-dvh lg:overflow-hidden overflow-x-hidden bg-slate-950 text-slate-800 flex flex-col font-sans selection:bg-blue-600 selection:text-white relative'
+          ? 'w-full h-dvh overflow-hidden bg-slate-950 text-slate-800 flex flex-col font-sans selection:bg-blue-600 selection:text-white relative'
           : 'min-h-screen bg-slate-100/70 text-slate-800 flex flex-col font-sans selection:bg-blue-600 selection:text-white'
       }
     >
@@ -253,14 +253,14 @@ export default function App() {
       <header
         className={
           isLoginView
-            ? 'fixed top-0 left-0 right-0 z-40 bg-slate-950/35 backdrop-blur-md border-b border-white/10'
+            ? 'fixed top-0 left-0 right-0 z-50 bg-slate-950/40 backdrop-blur-md border-b border-white/10'
             : 'sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs'
         }
       >
         <div
           className={
             isLoginView
-              ? 'w-full px-6 lg:px-8 h-14 flex items-center justify-between'
+              ? 'w-full px-3 sm:px-6 lg:px-8 h-14 flex items-center justify-between'
               : 'w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between'
           }
         >
@@ -294,26 +294,26 @@ export default function App() {
               onClick={() => setShowMailQueueModal(true)}
               className={
                 isLoginView
-                  ? 'text-xs text-blue-200 bg-blue-500/20 hover:bg-blue-500/30 px-3 py-1.5 rounded-xl border border-blue-400/30 transition-colors flex items-center gap-1.5 font-medium cursor-pointer'
+                  ? 'text-xs text-blue-200 bg-blue-500/20 hover:bg-blue-500/30 px-2.5 sm:px-3 py-1.5 rounded-xl border border-blue-400/30 transition-colors flex items-center gap-1.5 font-medium cursor-pointer'
                   : 'text-xs text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-xl border border-blue-200 transition-colors flex items-center gap-1.5 font-medium'
               }
               title="Xem danh sách email đã tạo và gửi tới y-p@dymvietnam.net"
             >
               <Mail className={isLoginView ? 'w-4 h-4 text-blue-300' : 'w-4 h-4 text-blue-600'} />
-              <span className="hidden md:inline">Hàng đợi Email</span>
+              <span className="text-[11px] sm:text-xs font-medium">Hàng đợi Email</span>
             </button>
 
             <button
               onClick={() => setShowGuideModal(true)}
               className={
                 isLoginView
-                  ? 'text-xs text-slate-200 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-xl border border-white/15 transition-colors flex items-center gap-1.5 cursor-pointer'
+                  ? 'text-xs text-slate-200 hover:text-white bg-white/10 hover:bg-white/20 px-2.5 sm:px-3 py-1.5 rounded-xl border border-white/15 transition-colors flex items-center gap-1.5 cursor-pointer'
                   : 'text-xs text-slate-600 hover:text-blue-700 hover:bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 transition-colors flex items-center gap-1.5'
               }
               title="Hướng dẫn cấu hình Firebase & Rules"
             >
               <HelpCircle className={isLoginView ? 'w-4 h-4 text-blue-300' : 'w-4 h-4 text-blue-600'} />
-              <span className="hidden md:inline font-medium">Hướng dẫn & Rules</span>
+              <span className="text-[11px] sm:text-xs font-medium">Hướng dẫn & Rules</span>
             </button>
 
             {currentUser ? (
@@ -361,7 +361,7 @@ export default function App() {
         </main>
       ) : !currentUser ? (
         /* State 2: Not logged in - Fullscreen login screen with zero outer margins/borders */
-        <main className="flex-1 w-full h-full flex flex-col">
+        <main className="flex-1 w-full h-full relative overflow-hidden">
           <LoginScreen
             onGoogleSignIn={handleGoogleSignIn}
             authError={authError}
