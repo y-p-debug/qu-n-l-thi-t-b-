@@ -333,11 +333,11 @@ export const BookingForm: React.FC<BookingFormProps> = ({
       </div>
 
       <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
-        {/* Date and Time Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Form Fields Responsive Grid: 1 col mobile, 2 cols sm, 3 cols md, 4 cols xl */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
           {/* 日付 Ngày */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider flex items-center gap-1.5">
+            <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider flex items-center gap-1.5 min-h-[22px]">
               <Calendar className="w-3.5 h-3.5 text-blue-600" />
               <span>日付 Ngày (Date) <span className="text-rose-500">*</span></span>
             </label>
@@ -353,9 +353,9 @@ export const BookingForm: React.FC<BookingFormProps> = ({
 
           {/* 開始時刻 Thời gian bắt đầu */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider flex items-center gap-1.5">
+            <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider flex items-center gap-1.5 min-h-[22px]">
               <Clock className="w-3.5 h-3.5 text-blue-600" />
-              <span>開始時刻 Thời gian bắt đầu <span className="text-rose-500">*</span></span>
+              <span>開始時刻 Bắt đầu <span className="text-rose-500">*</span></span>
             </label>
             <input
               type="time"
@@ -368,9 +368,9 @@ export const BookingForm: React.FC<BookingFormProps> = ({
 
           {/* 終了時刻 Thời gian kết thúc */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider flex items-center gap-1.5">
+            <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider flex items-center gap-1.5 min-h-[22px]">
               <Clock className="w-3.5 h-3.5 text-indigo-600" />
-              <span>終了時刻 Thời gian kết thúc <span className="text-rose-500">*</span></span>
+              <span>終了時刻 Kết thúc <span className="text-rose-500">*</span></span>
             </label>
             <input
               type="time"
@@ -380,12 +380,9 @@ export const BookingForm: React.FC<BookingFormProps> = ({
               className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 focus:bg-white transition-all shadow-xs"
             />
           </div>
-        </div>
 
-        {/* Device, Team, and Searchable Registrant Selection */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Thiết bị (Select) */}
-          <div className="md:col-span-1">
+          <div>
             <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider flex items-center justify-between">
               <span className="flex items-center gap-1.5">
                 <Laptop className="w-3.5 h-3.5 text-blue-600" />
@@ -587,6 +584,22 @@ export const BookingForm: React.FC<BookingFormProps> = ({
               </div>
             )}
           </div>
+
+          {/* 7. 目的 Mục đích (Chiếm 2 cột trên màn hình rộng xl:col-span-2) */}
+          <div className="col-span-1 sm:col-span-2 md:col-span-3 xl:col-span-2">
+            <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider flex items-center gap-1.5 min-h-[22px]">
+              <FileText className="w-3.5 h-3.5 text-blue-600" />
+              <span>目的 Mục đích sử dụng <span className="text-rose-500">*</span></span>
+            </label>
+            <input
+              type="text"
+              placeholder="Ví dụ: Họp khách hàng, quay video dự án, training nội bộ..."
+              value={purpose}
+              onChange={(e) => setPurpose(e.target.value)}
+              required
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 focus:bg-white transition-all shadow-xs"
+            />
+          </div>
         </div>
 
         {/* LAPTOP Password Alert Highlight */}
@@ -611,22 +624,6 @@ export const BookingForm: React.FC<BookingFormProps> = ({
             </div>
           </div>
         )}
-
-        {/* 目的 Mục đích */}
-        <div>
-          <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider flex items-center gap-1.5">
-            <FileText className="w-3.5 h-3.5 text-blue-600" />
-            <span>目的 Mục đích sử dụng <span className="text-rose-500">*</span></span>
-          </label>
-          <input
-            type="text"
-            placeholder="Ví dụ: Họp khách hàng, quay video dự án, training nội bộ..."
-            value={purpose}
-            onChange={(e) => setPurpose(e.target.value)}
-            required
-            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 focus:bg-white transition-all shadow-xs"
-          />
-        </div>
 
         {/* Error message */}
         {errorMessage && (

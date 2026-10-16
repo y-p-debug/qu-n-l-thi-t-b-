@@ -27,6 +27,7 @@ import {
   ADMIN_EMAIL, 
   ALLOWED_USERS_LIST 
 } from './types';
+import { isBookingOverdue } from './utils';
 import { BookingForm } from './BookingForm';
 import { BookingTable } from './BookingTable';
 import { ActiveBorrowingsCard } from './ActiveBorrowingsCard';
@@ -63,8 +64,36 @@ export default function App() {
   // Return modal state
   const [selectedBookingForReturn, setSelectedBookingForReturn] = useState<BookingRecord | null>(null);
 
-  // Active Tab state: 'register' (TAB 1: Đăng ký mượn) | 'history' (TAB 2: Lịch sử mượn)
-  const [activeTab, setActiveTab] = useState<'register' | 'history'>('register');
+  // Tab state with URL hash synchronization: #dang-ky, #lich-su
+  const getTabFromHash = (): 'register' | 'history' => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash.toLowerCase();
+      if (hash === '#lich-su' || hash === '#history') return 'history';
+      if (hash === '#dang-ky' || hash === '#register') return 'register';
+    }
+    return 'register';
+  };
+
+  const [activeTab, setActiveTabState] = useState<'register' | 'history'>(getTabFromHash);
+
+  const handleTabChange = (tab: 'register' | 'history') => {
+    setActiveTabState(tab);
+    if (typeof window !== 'undefined') {
+      const newHash = tab === 'history' ? '#lich-su' : '#dang-ky';
+      if (window.location.hash !== newHash) {
+        window.history.replaceState(null, '', newHash);
+      }
+    }
+  };
+
+  // Sync tab with browser hash changes (e.g. back/forward navigation)
+  useEffect(() => {
+    const handleHashChange = () => {
+      setActiveTabState(getTabFromHash());
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   // Deployment guide modal
   const [showGuideModal, setShowGuideModal] = useState<boolean>(false);
@@ -207,6 +236,9 @@ export default function App() {
     return emailMatch || nameMatch || userObjNameMatch;
   }).length;
 
+  // Count overdue bookings in the system for Tab 2 red badge
+  const overdueCount = bookings.filter((b) => isBookingOverdue(b)).length;
+
   const isLoginView = !isAuthLoading && !currentUser;
 
   return (
@@ -229,7 +261,7 @@ export default function App() {
           className={
             isLoginView
               ? 'w-full px-6 lg:px-8 h-14 flex items-center justify-between'
-              : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between'
+              : 'w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between'
           }
         >
           {/* Logo & App Title: Ẩn trên màn hình đăng nhập, giữ nguyên sau khi đăng nhập */}
@@ -336,105 +368,173 @@ export default function App() {
           />
         </main>
       ) : (
-        /* State 3: User Authenticated (Full App Access) - Tách thành 2 TAB */
-        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-          {/* THANH ĐIỀU HƯỚNG 2 TAB */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1 border-b border-slate-200">
-            <div className="inline-flex p-1.5 bg-slate-200/80 backdrop-blur-xs rounded-2xl gap-1.5 shadow-inner self-start">
-              {/* TAB 1 */}
+        /* State 3: User Authenticated (Full App Access) - Sidebar bên trái + Nội dung bên phải (Full màn hình) */
+        <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-6">
+          {/* Thanh điều hướng dạng tab ngang trên thiết bị di động (< 768px / md:hidden) */}
+          <div className="md:hidden w-full mb-5">
+            <div className="flex items-center gap-2 p-1.5 bg-slate-200/80 backdrop-blur-xs rounded-2xl shadow-inner">
+              {/* Tab 1 Mobile */}
               <button
                 type="button"
-                onClick={() => setActiveTab('register')}
-                className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                onClick={() => handleTabChange('register')}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   activeTab === 'register'
-                    ? 'bg-white text-blue-700 shadow-md shadow-slate-300/60 scale-[1.01]'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 font-bold scale-[1.01]'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/40'
                 }`}
               >
-                <Laptop className="w-4 h-4 text-blue-600" />
-                <span>Đăng ký mượn • 機器貸出登録</span>
+                <Laptop className={`w-3.5 h-3.5 shrink-0 ${activeTab === 'register' ? 'text-white' : 'text-blue-600'}`} />
+                <span className="truncate">Đăng ký mượn</span>
                 {userActiveBookingsCount > 0 && (
-                  <span className="ml-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300 animate-pulse">
-                    {userActiveBookingsCount} đang giữ
+                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                    activeTab === 'register' ? 'bg-amber-400 text-slate-900' : 'bg-amber-100 text-amber-800'
+                  }`}>
+                    {userActiveBookingsCount}
                   </span>
                 )}
               </button>
 
-              {/* TAB 2 */}
+              {/* Tab 2 Mobile */}
               <button
                 type="button"
-                onClick={() => setActiveTab('history')}
-                className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                onClick={() => handleTabChange('history')}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   activeTab === 'history'
-                    ? 'bg-white text-blue-700 shadow-md shadow-slate-300/60 scale-[1.01]'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 font-bold scale-[1.01]'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/40'
                 }`}
               >
-                <ClipboardList className="w-4 h-4 text-indigo-600" />
-                <span>Lịch sử mượn • 貸出一覧</span>
-                <span
-                  className={`ml-1 px-2 py-0.5 rounded-full text-[11px] font-bold ${
-                    activeTab === 'history'
-                      ? 'bg-blue-100 text-blue-800'
-                      : 'bg-slate-300/70 text-slate-700'
-                  }`}
-                >
+                <ClipboardList className={`w-3.5 h-3.5 shrink-0 ${activeTab === 'history' ? 'text-white' : 'text-indigo-600'}`} />
+                <span className="truncate">Lịch sử mượn</span>
+                {overdueCount > 0 && (
+                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-600 text-white animate-pulse">
+                    {overdueCount}
+                  </span>
+                )}
+                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                  activeTab === 'history' ? 'bg-blue-700 text-white' : 'bg-slate-300 text-slate-700'
+                }`}>
                   {bookings.length}
                 </span>
               </button>
             </div>
-
-            <div className="hidden sm:flex items-center gap-2 text-xs text-slate-500 font-medium">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Dữ liệu thời gian thực Firestore</span>
-            </div>
           </div>
 
-          {/* TAB 1: ĐĂNG KÝ MƯỢN */}
-          {activeTab === 'register' && (
-            <div className="max-w-[960px] mx-auto w-full space-y-6 animate-in fade-in duration-200">
-              {/* Form Đăng ký */}
-              <section>
-                <BookingForm
-                  currentUserEmail={currentUser.email || ''}
-                  currentUserName={currentUserName}
-                  activeBookings={bookings}
-                  onBookingSuccess={() => {
-                    // Realtime listener automatically updates
-                  }}
-                  onViewHistory={() => setActiveTab('history')}
-                />
-              </section>
+          <div className="flex flex-col md:flex-row items-start gap-6">
+            {/* SIDEBAR BÊN TRÁI (Hiển thị từ md trở lên, rộng 250px, sticky dưới header) */}
+            <aside className="hidden md:flex flex-col w-[250px] shrink-0 sticky top-[80px] self-start">
+              <div className="bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/90 p-3 shadow-xs space-y-2.5">
+                {/* TAB 1: Đăng ký mượn • 機器貸出登録 */}
+                <button
+                  type="button"
+                  onClick={() => handleTabChange('register')}
+                  className={`w-full text-left px-3.5 py-3 rounded-xl transition-all flex items-center justify-between gap-2.5 cursor-pointer ${
+                    activeTab === 'register'
+                      ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25 font-bold scale-[1.01]'
+                      : 'bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border border-slate-200/80 font-semibold'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <Laptop className={`w-4 h-4 shrink-0 ${activeTab === 'register' ? 'text-white' : 'text-blue-600'}`} />
+                    <span className="text-xs truncate">Đăng ký mượn • 機器貸出登録</span>
+                  </div>
+                  {userActiveBookingsCount > 0 && (
+                    <span className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      activeTab === 'register'
+                        ? 'bg-amber-300 text-amber-950 shadow-xs'
+                        : 'bg-amber-100 text-amber-800 border border-amber-300'
+                    } animate-pulse`}>
+                      {userActiveBookingsCount} đang giữ
+                    </span>
+                  )}
+                </button>
 
-              {/* Khối "Thiết bị bạn đang mượn" (chỉ hiện nếu người đăng nhập đang có thiết bị chưa trả) */}
-              <section>
-                <ActiveBorrowingsCard
-                  currentUserEmail={currentUser.email || ''}
-                  currentUserName={currentUserName}
-                  bookings={bookings}
-                  onOpenReturnModal={(b) => setSelectedBookingForReturn(b)}
-                />
-              </section>
-            </div>
-          )}
+                {/* TAB 2: Lịch sử mượn • 貸出一覧 */}
+                <button
+                  type="button"
+                  onClick={() => handleTabChange('history')}
+                  className={`w-full text-left px-3.5 py-3 rounded-xl transition-all flex items-center justify-between gap-2.5 cursor-pointer ${
+                    activeTab === 'history'
+                      ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25 font-bold scale-[1.01]'
+                      : 'bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border border-slate-200/80 font-semibold'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <ClipboardList className={`w-4 h-4 shrink-0 ${activeTab === 'history' ? 'text-white' : 'text-indigo-600'}`} />
+                    <span className="text-xs truncate">Lịch sử mượn • 貸出一覧</span>
+                  </div>
+                  <div className="shrink-0 flex items-center gap-1.5">
+                    {overdueCount > 0 && (
+                      <span
+                        className="px-1.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-600 text-white shadow-xs animate-pulse"
+                        title={`${overdueCount} lượt mượn quá giờ chưa trả`}
+                      >
+                        {overdueCount} quá giờ
+                      </span>
+                    )}
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                        activeTab === 'history'
+                          ? 'bg-blue-700 text-white border border-blue-400/30'
+                          : 'bg-slate-100 text-slate-700 border border-slate-200'
+                      }`}
+                    >
+                      {bookings.length}
+                    </span>
+                  </div>
+                </button>
+              </div>
+            </aside>
 
-          {/* TAB 2: LỊCH SỬ MƯỢN */}
-          {activeTab === 'history' && (
-            <div className="w-full space-y-6 animate-in fade-in duration-200">
-              {isDataLoading ? (
-                <div className="bg-white rounded-2xl p-12 text-center border border-slate-200">
-                  <div className="inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-2" />
-                  <p className="text-xs text-slate-500">Đang đồng bộ dữ liệu thời gian thực...</p>
+            {/* KHU VỰC NỘI DUNG BÊN PHẢI SIDEBAR (Chiếm toàn bộ chiều rộng còn lại) */}
+            <div className="flex-1 min-w-0 w-full space-y-6">
+              {/* TAB 1: ĐĂNG KÝ MƯỢN */}
+              {activeTab === 'register' && (
+                <div className="w-full space-y-6 animate-in fade-in duration-200">
+                  {/* Form Đăng ký */}
+                  <section>
+                    <BookingForm
+                      currentUserEmail={currentUser.email || ''}
+                      currentUserName={currentUserName}
+                      activeBookings={bookings}
+                      onBookingSuccess={() => {
+                        // Realtime listener automatically updates
+                      }}
+                      onViewHistory={() => handleTabChange('history')}
+                    />
+                  </section>
+
+                  {/* Khối "Thiết bị bạn đang mượn" (chỉ hiện nếu người đăng nhập đang có thiết bị chưa trả) */}
+                  <section>
+                    <ActiveBorrowingsCard
+                      currentUserEmail={currentUser.email || ''}
+                      currentUserName={currentUserName}
+                      bookings={bookings}
+                      onOpenReturnModal={(b) => setSelectedBookingForReturn(b)}
+                    />
+                  </section>
                 </div>
-              ) : (
-                <BookingTable
-                  bookings={bookings}
-                  currentUserEmail={currentUser.email || ''}
-                  onOpenReturnModal={(b) => setSelectedBookingForReturn(b)}
-                />
+              )}
+
+              {/* TAB 2: LỊCH SỬ MƯỢN */}
+              {activeTab === 'history' && (
+                <div className="w-full space-y-6 animate-in fade-in duration-200">
+                  {isDataLoading ? (
+                    <div className="bg-white rounded-2xl p-12 text-center border border-slate-200">
+                      <div className="inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-2" />
+                      <p className="text-xs text-slate-500">Đang đồng bộ dữ liệu thời gian thực...</p>
+                    </div>
+                  ) : (
+                    <BookingTable
+                      bookings={bookings}
+                      currentUserEmail={currentUser.email || ''}
+                      onOpenReturnModal={(b) => setSelectedBookingForReturn(b)}
+                    />
+                  )}
+                </div>
               )}
             </div>
-          )}
+          </div>
         </main>
       )}
 
@@ -462,11 +562,8 @@ export default function App() {
 
       {/* Footer (only shown when not on fullscreen LoginScreen) */}
       {!isLoginView && (
-        <footer className="mt-auto py-5 border-t border-slate-200 bg-white/70 text-center text-xs text-slate-500">
+        <footer className="mt-auto py-4 border-t border-slate-200 bg-white/70 text-center text-xs text-slate-500">
           <p>Hệ thống Quản lý mượn thiết bị • DYM Vietnam Co., Ltd.</p>
-          <p className="text-[11px] text-slate-400 mt-1">
-            Hỗ trợ: CAMERA 1 - CAMERA 5 & LAPTOP • Tự động quét quá giờ & Chống mượn trùng Firestore Transaction
-          </p>
         </footer>
       )}
     </div>

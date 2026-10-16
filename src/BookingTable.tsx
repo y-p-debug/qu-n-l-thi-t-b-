@@ -236,13 +236,13 @@ export const BookingTable: React.FC<BookingTableProps> = ({
                       <div className="font-semibold text-slate-900 leading-tight">
                         {b.registrantName}
                       </div>
-                      <div className="text-[11px] text-slate-500 truncate max-w-[160px]">
+                      <div className="text-[11px] text-slate-500 truncate max-w-[200px] xl:max-w-none">
                         {b.registrantEmail}
                       </div>
                     </td>
 
                     {/* Mục đích */}
-                    <td className="py-3 px-4 max-w-[200px]">
+                    <td className="py-3 px-4 max-w-[240px] lg:max-w-[360px] xl:max-w-[500px]">
                       <p className="line-clamp-2 text-slate-600" title={b.purpose}>
                         {b.purpose}
                       </p>
