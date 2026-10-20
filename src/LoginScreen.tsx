@@ -2,10 +2,15 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { 
   ShieldAlert, 
   ShieldCheck, 
-  ChevronRight,
-  ChevronLeft,
-  Sparkles
+  ChevronRight, 
+  ChevronLeft, 
+  Sparkles,
+  AlertTriangle,
+  Copy,
+  Check,
+  ExternalLink
 } from 'lucide-react';
+import { detectInAppBrowser } from './browserUtils';
 
 /**
  * HẰNG SỐ ĐỘ TRONG SUỐT (OPACITY) CỦA KHU VỰC ẢNH VÀ VIDEO TRÊN MÀN HÌNH ĐĂNG NHẬP
@@ -44,6 +49,43 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
   const [failedSet, setFailedSet] = useState<Set<string>>(new Set());
   const [backgroundLogo, setBackgroundLogo] = useState<string>('bg_logo.jpg');
   const [activeFourImages, setActiveFourImages] = useState<CarouselItem[]>([]);
+
+  // Phát hiện trình duyệt trong app (Messenger, Facebook, Zalo, Instagram, Line...)
+  const inAppInfo = detectInAppBrowser();
+  const [copiedLink, setCopiedLink] = useState<boolean>(false);
+
+  const handleCopyLink = useCallback(() => {
+    const url = typeof window !== 'undefined' ? window.location.href : '';
+    if (!url) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url)
+        .then(() => {
+          setCopiedLink(true);
+          setTimeout(() => setCopiedLink(false), 3000);
+        })
+        .catch(() => copyFallback(url));
+    } else {
+      copyFallback(url);
+    }
+  }, []);
+
+  const copyFallback = (text: string) => {
+    try {
+      const el = document.createElement('textarea');
+      el.value = text;
+      el.style.position = 'fixed';
+      el.style.opacity = '0';
+      document.body.appendChild(el);
+      el.focus();
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 3000);
+    } catch (e) {
+      console.warn('Copy error:', e);
+    }
+  };
 
   // Chỉ đọc danh sách ảnh và bg_logo.jpg từ /assets/assets.json
   useEffect(() => {
@@ -301,6 +343,47 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onGoogleSignIn, authEr
           </h2>
         </div>
       </div>
+
+      {/* Thông báo rõ ràng khi phát hiện trình duyệt trong app (Messenger, Facebook, Zalo, Instagram, Line...) */}
+      {inAppInfo.isInApp && (
+        <div className="p-2.5 sm:p-3 bg-amber-50/95 border-2 border-amber-300 rounded-xl sm:rounded-2xl text-left space-y-2 text-amber-950 shadow-xs animate-in fade-in">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="font-extrabold text-[12px] sm:text-xs text-amber-950 leading-tight">
+                Phát hiện mở từ {inAppInfo.appName}
+              </p>
+              <p className="text-[11px] sm:text-xs text-amber-900 mt-0.5 leading-snug">
+                Vui lòng mở liên kết bằng <strong>Safari</strong> hoặc <strong>Chrome</strong> để đăng nhập.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleCopyLink}
+            className="w-full py-2 px-3 rounded-lg bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+          >
+            {copiedLink ? (
+              <>
+                <Check className="w-3.5 h-3.5 text-white" />
+                <span>Đã sao chép liên kết! Dán vào Safari / Chrome</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-3.5 h-3.5 text-white" />
+                <span>Sao chép liên kết để mở trình duyệt</span>
+              </>
+            )}
+          </button>
+
+          <p className="text-[10px] text-amber-800 italic leading-tight">
+            {inAppInfo.isIOS 
+              ? '💡 iPhone: Bấm nút (···) hoặc chia sẻ ở góc màn hình, chọn "Mở bằng Safari".'
+              : '💡 Android: Bấm nút (⋮) ở góc trên và chọn "Mở bằng Chrome" hoặc "Mở bằng trình duyệt".'}
+          </p>
+        </div>
+      )}
 
       {/* Error banner nếu bị từ chối đăng nhập */}
       {authError && (

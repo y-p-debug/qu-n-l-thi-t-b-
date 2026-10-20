@@ -3,6 +3,8 @@ import {
   getAuth, 
   GoogleAuthProvider, 
   signInWithPopup, 
+  signInWithRedirect,
+  getRedirectResult,
   signOut as fbSignOut, 
   onAuthStateChanged,
   User 
@@ -21,6 +23,7 @@ import {
   runTransaction, 
   updateDoc, 
   addDoc,
+  deleteDoc,
   serverTimestamp,
   Firestore
 } from 'firebase/firestore';
@@ -28,7 +31,8 @@ import {
   getStorage, 
   ref as storageRef, 
   uploadBytes, 
-  getDownloadURL 
+  getDownloadURL,
+  deleteObject
 } from 'firebase/storage';
 import localFirebaseConfig from '../firebase-applet-config.json';
 import { ALLOWED_USERS_LIST, BookingRecord } from './types';
@@ -44,13 +48,20 @@ const envFirebaseConfig = {
   firestoreDatabaseId: import.meta.env.VITE_FIREBASE_DATABASE_ID
 };
 
-const firebaseConfig: Record<string, any> = (envFirebaseConfig.apiKey && envFirebaseConfig.projectId)
+const baseFirebaseConfig: Record<string, any> = (envFirebaseConfig.apiKey && envFirebaseConfig.projectId)
   ? envFirebaseConfig
-  : localFirebaseConfig;
+  : { ...localFirebaseConfig };
+
+// Ưu tiên authDomain từ biến môi trường VITE_FIREBASE_AUTH_DOMAIN (không ghi cứng)
+const firebaseConfig: Record<string, any> = {
+  ...baseFirebaseConfig,
+  ...(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ? { authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN } : {})
+};
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 export const auth = getAuth(app);
+export { signInWithPopup, signInWithRedirect, getRedirectResult };
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({
   prompt: 'select_account'
@@ -361,4 +372,54 @@ export function queueNotificationEmail(payload: {
       return { ok: false, error: errMsg };
     }
   })();
+}
+
+/**
+ * HẰNG SỐ EMAIL QUẢN TRỊ VIÊN CÓ QUYỀN XOÁ LỊCH SỬ MƯỢN THIẾT BỊ
+ */
+export const ADMIN_EMAIL = 'y-p@dymvietnam.net';
+
+/**
+ * Xoá một bản ghi mượn thiết bị trong Firestore và ảnh trả tương ứng trên Firebase Storage.
+ * Quyền này được bảo vệ ở cả Client và Firestore/Storage Security Rules (chỉ y-p@dymvietnam.net).
+ */
+export async function deleteBookingRecord(booking: BookingRecord): Promise<void> {
+  // 1. Xoá ảnh hoàn trả trên Firebase Storage nếu có
+  if (booking.returnPhotoUrl && booking.returnPhotoUrl.startsWith('http') && booking.returnPhotoUrl.includes('firebasestorage')) {
+    try {
+      const imgRef = storageRef(storage, booking.returnPhotoUrl);
+      await deleteObject(imgRef);
+      console.log(`[STORAGE] Deleted return photo for booking ${booking.id}`);
+    } catch (storageErr) {
+      console.warn(`[STORAGE WARNING] Could not delete return photo for booking ${booking.id} (proceeding to delete record):`, storageErr);
+    }
+  }
+
+  // 2. Xoá tài liệu khỏi Firestore
+  const docRef = doc(db, 'bookings', booking.id);
+  await deleteDoc(docRef);
+  console.log(`[FIRESTORE] Deleted booking record ${booking.id}`);
+}
+
+/**
+ * Xoá nhiều bản ghi mượn thiết bị cùng lúc
+ */
+export async function deleteMultipleBookingRecords(
+  bookingsToDelete: BookingRecord[]
+): Promise<{ successCount: number; errors: string[] }> {
+  let successCount = 0;
+  const errors: string[] = [];
+
+  for (const b of bookingsToDelete) {
+    try {
+      await deleteBookingRecord(b);
+      successCount++;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`Failed to delete booking ${b.id}:`, err);
+      errors.push(`${b.device} (${b.registrantName} - ${b.date}): ${msg}`);
+    }
+  }
+
+  return { successCount, errors };
 }

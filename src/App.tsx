@@ -9,10 +9,13 @@ import {
 } from './firebase';
 import { 
   signInWithPopup, 
+  signInWithRedirect,
+  getRedirectResult,
   signOut as fbSignOut, 
   onAuthStateChanged, 
   User 
 } from 'firebase/auth';
+import { detectInAppBrowser } from './browserUtils';
 import { 
   collection, 
   query, 
@@ -234,25 +237,106 @@ export default function App() {
     return () => unsubscribe();
   }, [currentUser]);
 
-  // Handle Google Login
-  const handleGoogleSignIn = async () => {
-    setAuthError(null);
-    try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const user = result.user;
-      if (user && user.email) {
-        const check = checkEmailAllowedLocally(user.email);
-        if (!check.allowed) {
-          await fbSignOut(auth);
-          setCurrentUser(null);
-          setAuthError(`Email không được phép (${user.email}). Chỉ email nhân viên được phân quyền mới có thể đăng nhập.`);
+  // Xử lý kết quả Redirect khi app khởi động (sau khi quay lại từ signInWithRedirect)
+  useEffect(() => {
+    let isMounted = true;
+    getRedirectResult(auth)
+      .then(async (result) => {
+        if (!isMounted || !result || !result.user) return;
+        const user = result.user;
+        if (user && user.email) {
+          const check = checkEmailAllowedLocally(user.email);
+          if (!check.allowed) {
+            await fbSignOut(auth);
+            if (isMounted) {
+              setCurrentUser(null);
+              setAuthError(`Email không được phép (${user.email}). Chỉ email nhân viên được phân quyền mới có thể đăng nhập.`);
+            }
+          }
         }
-      }
-    } catch (err: unknown) {
-      console.error('Google Sign-In Error:', err);
-      const msg = err instanceof Error ? err.message : 'Đăng nhập không thành công';
-      setAuthError(`Lỗi đăng nhập: ${msg}`);
+      })
+      .catch((err: any) => {
+        if (!isMounted) return;
+        console.warn('getRedirectResult notice:', err?.code, err?.message);
+
+        const code = err?.code || '';
+        // Bỏ qua các sự kiện không phải lỗi thực tế
+        if (code === 'auth/credential-already-in-use' || code === 'auth/user-cancelled') {
+          return;
+        }
+
+        // Thông báo rõ nếu gặp lỗi Safari / storage-partitioned browser environment
+        if (
+          code.includes('missing-initial-state') ||
+          (err?.message && err.message.includes('missing initial state'))
+        ) {
+          setAuthError(
+            'Trình duyệt Safari/iOS đã chặn phiên đăng nhập chuyển hướng do cơ chế lưu trữ phân vùng. Vui lòng bấm Đăng nhập lại trực tiếp hoặc mở bằng Chrome.'
+          );
+          return;
+        }
+
+        if (err?.message) {
+          setAuthError(`Lỗi đăng nhập chuyển hướng: ${err.message}`);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Handle Google Login: Gọi trực tiếp signInWithPopup trong sự kiện bấm nút (không await trước)
+  const handleGoogleSignIn = () => {
+    setAuthError(null);
+
+    // Kiểm tra trình duyệt trong app (Messenger, Facebook, Zalo, Instagram, Line...)
+    const inApp = detectInAppBrowser();
+    if (inApp.isInApp) {
+      setAuthError(
+        `Bạn đang mở trang từ ${inApp.appName}. Vui lòng sao chép liên kết và mở bằng Safari hoặc Chrome để đăng nhập.`
+      );
+      return;
     }
+
+    // 1. Dùng signInWithPopup làm cách đăng nhập chính (gọi đồng bộ ngay tại click)
+    signInWithPopup(auth, googleProvider)
+      .then(async (result) => {
+        const user = result.user;
+        if (user && user.email) {
+          const check = checkEmailAllowedLocally(user.email);
+          if (!check.allowed) {
+            await fbSignOut(auth);
+            setCurrentUser(null);
+            setAuthError(`Email không được phép (${user.email}). Chỉ email nhân viên được phân quyền mới có thể đăng nhập.`);
+          }
+        }
+      })
+      .catch(async (err: any) => {
+        const code = err?.code || '';
+        console.warn('Google Sign-In Popup failed/blocked:', code, err);
+
+        // Nếu popup bị chặn hoặc không được hỗ trợ trong môi trường này -> Tự động dự phòng sang signInWithRedirect
+        const isPopupBlockedOrUnsupported =
+          code === 'auth/popup-blocked' ||
+          code === 'auth/popup-closed-by-user' ||
+          code === 'auth/operation-not-supported-in-this-environment' ||
+          code === 'auth/cancelled-popup-request';
+
+        if (isPopupBlockedOrUnsupported) {
+          try {
+            console.log('Tự động chuyển tiếp sang signInWithRedirect...');
+            await signInWithRedirect(auth, googleProvider);
+          } catch (redirectErr: any) {
+            console.error('signInWithRedirect fallback error:', redirectErr);
+            const redirectMsg = redirectErr?.message || 'Không thể chuyển tiếp đăng nhập';
+            setAuthError(`Lỗi đăng nhập: ${redirectMsg}`);
+          }
+        } else {
+          const msg = err instanceof Error ? err.message : 'Đăng nhập không thành công';
+          setAuthError(`Lỗi đăng nhập: ${msg}`);
+        }
+      });
   };
 
   const handleSignOut = async () => {
@@ -313,21 +397,20 @@ export default function App() {
           {/* Logo & App Title: Ẩn trên màn hình đăng nhập, giữ nguyên sau khi đăng nhập */}
           {!isLoginView ? (
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#0096C7] text-white flex items-center justify-center shadow-xs">
-                <Laptop className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white p-1 flex items-center justify-center shadow-xs shrink-0 overflow-hidden border border-[#48CAE4]/40">
+                <img
+                  src="/assets/bg_logo.jpg"
+                  alt="DYM Logo"
+                  className="w-full h-full object-contain rounded-lg"
+                />
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-base sm:text-lg text-white tracking-tight">
-                    Quản lý mượn thiết bị
-                  </span>
-                  <span className="hidden sm:inline-block text-[11px] font-bold text-[#03045E] bg-[#CAF0F8] px-2 py-0.5 rounded-full border border-[#48CAE4]">
-                    DYM Vietnam
-                  </span>
-                </div>
-                <p className="text-xs text-[#CAF0F8] font-semibold tracking-wide">
-                  機器貸出管理システム (Song ngữ Việt – Nhật)
-                </p>
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-base sm:text-lg text-white tracking-tight">
+                  Quản lý mượn thiết bị
+                </span>
+                <span className="hidden sm:inline-block text-[11px] font-bold text-[#03045E] bg-[#CAF0F8] px-2.5 py-0.5 rounded-full border border-[#48CAE4] shadow-2xs">
+                  DYM Vietnam
+                </span>
               </div>
             </div>
           ) : (
