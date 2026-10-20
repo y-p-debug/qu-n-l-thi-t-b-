@@ -1,5 +1,20 @@
 @import "tailwindcss";
 
+:root {
+  --b1: #03045E;
+  --b2: #023E8A;
+  --b3: #0077B6;
+  --b4: #0096C7;
+  --b5: #00B4D8;
+  --b6: #48CAE4;
+  --b7: #90E0EF;
+  --b8: #ADE8F4;
+  --b9: #CAF0F8;
+  --c-text: #03045E;
+  --c-danger: #C0392B;
+  --app-bg: #f1fafc;
+}
+
 @layer base {
   html, body {
     width: 100%;
@@ -9,4 +24,3 @@
     -webkit-text-size-adjust: 100%;
   }
 }
-

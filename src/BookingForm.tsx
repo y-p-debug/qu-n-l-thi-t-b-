@@ -38,7 +38,7 @@ interface BookingFormProps {
   currentUserEmail: string;
   currentUserName: string;
   activeBookings: BookingRecord[];
-  onBookingSuccess: () => void;
+  onBookingSuccess: (device?: DeviceType, laptopPassword?: string | null) => void;
   onViewHistory?: () => void;
 }
 
@@ -300,6 +300,10 @@ export const BookingForm: React.FC<BookingFormProps> = ({
       } else {
         setSuccessMessage(`Đăng ký mượn ${device} thành công! Email thông báo đã được gửi.`);
       }
+
+      const bookedDevice = device;
+      const bookedPassword = laptopPassword || '976431';
+
       setPurpose('');
       setDevice('');
 
@@ -309,7 +313,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
         origin: { y: 0.7 }
       });
 
-      onBookingSuccess();
+      onBookingSuccess(bookedDevice, bookedPassword);
     } catch (err: unknown) {
       console.error('Booking submission error:', err);
       const msg = err instanceof Error ? err.message : 'Có lỗi xảy ra khi đăng ký';
@@ -320,14 +324,14 @@ export const BookingForm: React.FC<BookingFormProps> = ({
   };
 
   return (
-    <div className="w-full bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/80 overflow-hidden">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-sky-700 px-5 py-3.5 text-white flex items-center justify-between">
+    <div className="w-full bg-white rounded-2xl shadow-sm border border-[#ADE8F4] overflow-hidden">
+      {/* Header: gradient ngang từ --b2 sang --b3, chữ trắng đậm */}
+      <div className="bg-gradient-to-r from-[#023E8A] to-[#0077B6] px-5 py-3.5 text-white flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-blue-200" />
-          <span className="text-sm font-bold tracking-tight">Đăng ký mượn thiết bị • 機器貸出登録</span>
+          <Sparkles className="w-4 h-4 text-[#ADE8F4]" />
+          <span className="text-sm font-bold tracking-tight text-white">Đăng ký mượn thiết bị • 機器貸出登録</span>
         </div>
-        <p className="text-xs text-blue-100 hidden sm:block font-medium">
+        <p className="text-xs text-[#CAF0F8] hidden sm:block font-medium">
           DYM Vietnam Co., Ltd.
         </p>
       </div>
@@ -337,8 +341,8 @@ export const BookingForm: React.FC<BookingFormProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
           {/* 日付 Ngày */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider flex items-center gap-1.5 min-h-[22px]">
-              <Calendar className="w-3.5 h-3.5 text-blue-600" />
+            <label className="block text-xs font-bold text-[#03045E] mb-1.5 uppercase tracking-wider flex items-center gap-1.5 min-h-[22px]">
+              <Calendar className="w-3.5 h-3.5 text-[#0096C7]" />
               <span>日付 Ngày (Date) <span className="text-rose-500">*</span></span>
             </label>
             <input
@@ -347,14 +351,14 @@ export const BookingForm: React.FC<BookingFormProps> = ({
               value={date}
               onChange={(e) => setDate(e.target.value)}
               required
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 focus:bg-white transition-all shadow-xs"
+              className="w-full px-3.5 py-2.5 bg-white border border-[#90E0EF] rounded-xl text-sm font-medium text-[#03045E] focus:outline-none focus:ring-2 focus:ring-[#ADE8F4] focus:border-[#0096C7] transition-all shadow-xs"
             />
           </div>
 
           {/* 開始時刻 Thời gian bắt đầu */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider flex items-center gap-1.5 min-h-[22px]">
-              <Clock className="w-3.5 h-3.5 text-blue-600" />
+            <label className="block text-xs font-bold text-[#03045E] mb-1.5 uppercase tracking-wider flex items-center gap-1.5 min-h-[22px]">
+              <Clock className="w-3.5 h-3.5 text-[#0096C7]" />
               <span>開始時刻 Bắt đầu <span className="text-rose-500">*</span></span>
             </label>
             <input
@@ -362,14 +366,14 @@ export const BookingForm: React.FC<BookingFormProps> = ({
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}
               required
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 focus:bg-white transition-all shadow-xs"
+              className="w-full px-3.5 py-2.5 bg-white border border-[#90E0EF] rounded-xl text-sm font-medium text-[#03045E] focus:outline-none focus:ring-2 focus:ring-[#ADE8F4] focus:border-[#0096C7] transition-all shadow-xs"
             />
           </div>
 
           {/* 終了時刻 Thời gian kết thúc */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider flex items-center gap-1.5 min-h-[22px]">
-              <Clock className="w-3.5 h-3.5 text-indigo-600" />
+            <label className="block text-xs font-bold text-[#03045E] mb-1.5 uppercase tracking-wider flex items-center gap-1.5 min-h-[22px]">
+              <Clock className="w-3.5 h-3.5 text-[#0096C7]" />
               <span>終了時刻 Kết thúc <span className="text-rose-500">*</span></span>
             </label>
             <input
@@ -377,39 +381,39 @@ export const BookingForm: React.FC<BookingFormProps> = ({
               value={endTime}
               onChange={(e) => setEndTime(e.target.value)}
               required
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 focus:bg-white transition-all shadow-xs"
+              className="w-full px-3.5 py-2.5 bg-white border border-[#90E0EF] rounded-xl text-sm font-medium text-[#03045E] focus:outline-none focus:ring-2 focus:ring-[#ADE8F4] focus:border-[#0096C7] transition-all shadow-xs"
             />
           </div>
 
           {/* Thiết bị (Select) */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider flex items-center justify-between">
+            <label className="block text-xs font-bold text-[#03045E] mb-1.5 uppercase tracking-wider flex items-center justify-between">
               <span className="flex items-center gap-1.5">
-                <Laptop className="w-3.5 h-3.5 text-blue-600" />
+                <Laptop className="w-3.5 h-3.5 text-[#0096C7]" />
                 Thiết bị (機器) <span className="text-rose-500">*</span>
               </span>
-              <span className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full font-semibold border border-emerald-200">
-                {availableDevices.length} thiết bị sẵn sàng
+              <span className="text-[10px] text-[#03045E] bg-[#ADE8F4] px-2 py-0.5 rounded-full font-bold border border-[#90E0EF]">
+                {availableDevices.length} SẴN SÀNG
               </span>
             </label>
             <select
               value={device}
               onChange={(e) => setDevice(e.target.value as DeviceType)}
               required
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 focus:bg-white transition-all shadow-xs cursor-pointer"
+              className="w-full px-3.5 py-2.5 bg-white border border-[#90E0EF] rounded-xl text-sm font-semibold text-[#03045E] focus:outline-none focus:ring-2 focus:ring-[#ADE8F4] focus:border-[#0096C7] transition-all shadow-xs cursor-pointer"
             >
               <option value="">-- Chọn thiết bị còn trống --</option>
               {DEVICE_LIST.map((d) => {
                 const isAvail = availableDevices.includes(d);
                 return (
-                  <option key={d} value={d} disabled={!isAvail} className={!isAvail ? 'text-slate-400 bg-slate-100' : 'text-slate-900 font-medium'}>
+                  <option key={d} value={d} disabled={!isAvail} className={!isAvail ? 'text-slate-400 bg-slate-100' : 'text-[#03045E] font-medium'}>
                     {d} {isAvail ? '(Còn trống ✓)' : '(Đã có người mượn / Bận)'}
                   </option>
                 );
               })}
             </select>
             {availableDevices.length === 0 && (
-              <p className="text-[11px] text-amber-600 mt-1 flex items-center gap-1">
+              <p className="text-[11px] text-[#C0392B] font-semibold mt-1 flex items-center gap-1">
                 <Info className="w-3 h-3 shrink-0" />
                 Khung giờ này tất cả thiết bị đã được mượn hoặc đang bận.
               </p>
@@ -418,15 +422,15 @@ export const BookingForm: React.FC<BookingFormProps> = ({
 
           {/* チーム Team */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider flex items-center gap-1.5 min-h-[22px]">
-              <Users className="w-3.5 h-3.5 text-blue-600" />
+            <label className="block text-xs font-bold text-[#03045E] mb-1.5 uppercase tracking-wider flex items-center gap-1.5 min-h-[22px]">
+              <Users className="w-3.5 h-3.5 text-[#0096C7]" />
               <span>チーム Team <span className="text-rose-500">*</span></span>
             </label>
             <select
               value={team}
               onChange={(e) => handleTeamChange(e.target.value as TeamType)}
               required
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 focus:bg-white transition-all shadow-xs cursor-pointer"
+              className="w-full px-3.5 py-2.5 bg-white border border-[#90E0EF] rounded-xl text-sm font-semibold text-[#03045E] focus:outline-none focus:ring-2 focus:ring-[#ADE8F4] focus:border-[#0096C7] transition-all shadow-xs cursor-pointer"
             >
               {TEAM_LIST.map((t) => (
                 <option key={t} value={t}>
@@ -438,28 +442,28 @@ export const BookingForm: React.FC<BookingFormProps> = ({
 
           {/* 登録者名 Người đăng ký (Có ô tìm kiếm đánh chữ + liên kết 2 chiều với Team) */}
           <div className="relative" ref={dropdownRef}>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider flex items-center gap-1.5 min-h-[22px]">
-              <UserCheck className="w-3.5 h-3.5 text-blue-600" />
+            <label className="block text-xs font-bold text-[#03045E] mb-1.5 uppercase tracking-wider flex items-center gap-1.5 min-h-[22px]">
+              <UserCheck className="w-3.5 h-3.5 text-[#0096C7]" />
               <span>登録者名 Người đăng ký <span className="text-rose-500">*</span></span>
             </label>
 
             {/* Custom Searchable Dropdown Trigger */}
             <div
               onClick={() => setIsRegistrantDropdownOpen(!isRegistrantDropdownOpen)}
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 hover:border-blue-500 rounded-xl text-sm font-semibold text-blue-900 flex items-center justify-between cursor-pointer transition-all shadow-xs"
+              className="w-full px-3.5 py-2.5 bg-white border border-[#90E0EF] hover:border-[#0096C7] rounded-xl text-sm font-semibold text-[#03045E] flex items-center justify-between cursor-pointer transition-all shadow-xs"
             >
               <span className="truncate">
                 {registrantName || '-- Chọn hoặc tìm người đăng ký --'}
               </span>
-              <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isRegistrantDropdownOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`w-4 h-4 text-[#0096C7] transition-transform ${isRegistrantDropdownOpen ? 'rotate-180' : ''}`} />
             </div>
 
             {/* Dropdown Menu Popup - ENLARGED */}
             {isRegistrantDropdownOpen && (
-              <div className="absolute right-0 left-0 sm:-left-24 sm:right-0 sm:w-[480px] top-full mt-2 z-50 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150 ring-1 ring-black/5">
+              <div className="absolute right-0 left-0 sm:-left-24 sm:right-0 sm:w-[480px] top-full mt-2 z-50 bg-white rounded-2xl shadow-2xl border border-[#90E0EF] overflow-hidden animate-in fade-in zoom-in-95 duration-150 ring-1 ring-black/5">
                 {/* Search Input Box */}
-                <div className="p-3.5 border-b border-slate-100 bg-slate-50 flex items-center gap-2.5">
-                  <Search className="w-5 h-5 text-slate-400 shrink-0 ml-1" />
+                <div className="p-3.5 border-b border-[#90E0EF]/60 bg-[#CAF0F8]/30 flex items-center gap-2.5">
+                  <Search className="w-5 h-5 text-[#0096C7] shrink-0 ml-1" />
                   <input
                     type="text"
                     placeholder="Gõ tên hoặc email để tìm kiếm nhanh..."
@@ -467,7 +471,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                     onChange={(e) => setRegistrantSearchText(e.target.value)}
                     autoFocus
                     onClick={(e) => e.stopPropagation()}
-                    className="w-full text-sm font-medium text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-400"
+                    className="w-full text-sm font-medium text-[#03045E] bg-transparent focus:outline-none placeholder:text-slate-400"
                   />
                   {registrantSearchText && (
                     <button
@@ -476,7 +480,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                         e.stopPropagation();
                         setRegistrantSearchText('');
                       }}
-                      className="p-1.5 text-slate-400 hover:text-slate-700 rounded-full hover:bg-slate-200 transition-colors"
+                      className="p-1.5 text-slate-400 hover:text-[#03045E] rounded-full hover:bg-[#CAF0F8] transition-colors"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -484,7 +488,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                 </div>
 
                 {/* Items List - Expanded Height & Roomier Spacing */}
-                <div className="max-h-[380px] overflow-y-auto divide-y divide-slate-100 p-2 text-sm">
+                <div className="max-h-[380px] overflow-y-auto divide-y divide-[#CAF0F8] p-2 text-sm">
                   {/* When searching, show all matched */}
                   {registrantSearchText.trim() ? (
                     filteredMembers.length === 0 ? (
@@ -499,19 +503,19 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                             key={u.email}
                             onClick={() => handleSelectMember(u)}
                             className={`p-3 rounded-xl cursor-pointer flex items-center justify-between transition-colors ${
-                              isSelected ? 'bg-blue-50 text-blue-900 font-bold border border-blue-200' : 'hover:bg-slate-50 text-slate-800'
+                              isSelected ? 'bg-[#CAF0F8] text-[#03045E] font-bold border border-[#0096C7]' : 'hover:bg-[#CAF0F8]/40 text-[#03045E]'
                             }`}
                           >
                             <div className="space-y-0.5">
                               <div className="flex items-center gap-2">
-                                <span className="text-sm font-semibold">{u.name}</span>
-                                <span className="text-xs px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 font-bold">
+                                <span className="text-sm font-semibold text-[#03045E]">{u.name}</span>
+                                <span className="text-xs px-2 py-0.5 rounded-md bg-[#ADE8F4] text-[#03045E] font-bold">
                                   {u.team}
                                 </span>
                               </div>
-                              <div className="text-xs text-slate-500 font-normal">{u.email}</div>
+                              <div className="text-xs text-[#03045E]/70 font-normal">{u.email}</div>
                             </div>
-                            {isSelected && <Check className="w-5 h-5 text-blue-600 shrink-0" />}
+                            {isSelected && <Check className="w-5 h-5 text-[#0096C7] shrink-0" />}
                           </div>
                         );
                       })
@@ -519,9 +523,9 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                   ) : (
                     <>
                       {/* Priority: Members of the currently selected team */}
-                      <div className="px-3 py-2 text-xs font-bold text-blue-700 uppercase tracking-wider bg-blue-50/80 rounded-lg my-1 flex items-center justify-between">
+                      <div className="px-3 py-2 text-xs font-bold text-[#03045E] uppercase tracking-wider bg-[#CAF0F8] rounded-lg my-1 flex items-center justify-between">
                         <span>Thành viên {team}</span>
-                        <span className="text-[11px] bg-blue-200/80 text-blue-900 px-2 py-0.5 rounded-full font-bold">
+                        <span className="text-[11px] bg-white text-[#03045E] px-2 py-0.5 rounded-full font-bold border border-[#90E0EF]">
                           {filteredMembers.length} người
                         </span>
                       </div>
@@ -532,14 +536,14 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                             key={u.email}
                             onClick={() => handleSelectMember(u)}
                             className={`p-3 rounded-xl cursor-pointer flex items-center justify-between transition-colors ${
-                              isSelected ? 'bg-blue-50 text-blue-900 font-bold border border-blue-200' : 'hover:bg-slate-50 text-slate-800'
+                              isSelected ? 'bg-[#CAF0F8] text-[#03045E] font-bold border border-[#0096C7]' : 'hover:bg-[#CAF0F8]/40 text-[#03045E]'
                             }`}
                           >
                             <div className="space-y-0.5">
-                              <div className="text-sm font-semibold">{u.name}</div>
-                              <div className="text-xs text-slate-500 font-normal">{u.email}</div>
+                              <div className="text-sm font-semibold text-[#03045E]">{u.name}</div>
+                              <div className="text-xs text-[#03045E]/70 font-normal">{u.email}</div>
                             </div>
-                            {isSelected && <Check className="w-5 h-5 text-blue-600 shrink-0" />}
+                            {isSelected && <Check className="w-5 h-5 text-[#0096C7] shrink-0" />}
                           </div>
                         );
                       })}
@@ -547,9 +551,9 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                       {/* Other teams members */}
                       {otherTeamMembers.length > 0 && (
                         <>
-                          <div className="px-3 py-2 text-xs font-bold text-slate-600 uppercase tracking-wider bg-slate-100 rounded-lg mt-3 mb-1 flex items-center justify-between">
+                          <div className="px-3 py-2 text-xs font-bold text-[#03045E] uppercase tracking-wider bg-slate-100 rounded-lg mt-3 mb-1 flex items-center justify-between">
                             <span>Thành viên các team khác (Bấm để tự đổi team)</span>
-                            <span className="text-[11px] bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full font-bold">
+                            <span className="text-[11px] bg-white text-[#03045E] px-2 py-0.5 rounded-full font-bold border border-[#90E0EF]">
                               {otherTeamMembers.length} người
                             </span>
                           </div>
@@ -560,19 +564,19 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                                 key={u.email}
                                 onClick={() => handleSelectMember(u)}
                                 className={`p-3 rounded-xl cursor-pointer flex items-center justify-between transition-colors ${
-                                  isSelected ? 'bg-blue-50 text-blue-900 font-bold border border-blue-200' : 'hover:bg-slate-50 text-slate-700'
+                                  isSelected ? 'bg-[#CAF0F8] text-[#03045E] font-bold border border-[#0096C7]' : 'hover:bg-[#CAF0F8]/40 text-[#03045E]'
                                 }`}
                               >
                                 <div className="space-y-0.5">
                                   <div className="flex items-center gap-2">
-                                    <span className="text-sm font-semibold">{u.name}</span>
-                                    <span className="text-xs px-2 py-0.5 rounded-md bg-slate-200 text-slate-700 font-medium">
+                                    <span className="text-sm font-semibold text-[#03045E]">{u.name}</span>
+                                    <span className="text-xs px-2 py-0.5 rounded-md bg-[#ADE8F4] text-[#03045E] font-semibold">
                                       {u.team}
                                     </span>
                                   </div>
-                                  <div className="text-xs text-slate-500 font-normal">{u.email}</div>
+                                  <div className="text-xs text-[#03045E]/70 font-normal">{u.email}</div>
                                 </div>
-                                {isSelected && <Check className="w-5 h-5 text-blue-600 shrink-0" />}
+                                {isSelected && <Check className="w-5 h-5 text-[#0096C7] shrink-0" />}
                               </div>
                             );
                           })}
@@ -587,8 +591,8 @@ export const BookingForm: React.FC<BookingFormProps> = ({
 
           {/* 7. 目的 Mục đích (Chiếm 2 cột trên màn hình rộng xl:col-span-2) */}
           <div className="col-span-1 sm:col-span-2 md:col-span-3 xl:col-span-2">
-            <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider flex items-center gap-1.5 min-h-[22px]">
-              <FileText className="w-3.5 h-3.5 text-blue-600" />
+            <label className="block text-xs font-bold text-[#03045E] mb-1.5 uppercase tracking-wider flex items-center gap-1.5 min-h-[22px]">
+              <FileText className="w-3.5 h-3.5 text-[#0096C7]" />
               <span>目的 Mục đích sử dụng <span className="text-rose-500">*</span></span>
             </label>
             <input
@@ -597,28 +601,28 @@ export const BookingForm: React.FC<BookingFormProps> = ({
               value={purpose}
               onChange={(e) => setPurpose(e.target.value)}
               required
-              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 focus:bg-white transition-all shadow-xs"
+              className="w-full px-4 py-2.5 bg-white border border-[#90E0EF] rounded-xl text-sm text-[#03045E] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#ADE8F4] focus:border-[#0096C7] transition-all shadow-xs"
             />
           </div>
         </div>
 
         {/* LAPTOP Password Alert Highlight */}
         {device === 'LAPTOP' && (
-          <div className="p-4 bg-amber-50 border-2 border-amber-400 rounded-2xl flex items-start gap-3.5 text-amber-900 animate-in fade-in slide-in-from-top-2 duration-300 shadow-md shadow-amber-500/5">
-            <div className="w-9 h-9 rounded-xl bg-amber-200/80 text-amber-800 flex items-center justify-center shrink-0">
-              <KeyRound className="w-5 h-5" />
+          <div className="p-4 bg-[#CAF0F8]/40 border-2 border-[#0096C7] rounded-2xl flex items-start gap-3.5 text-[#03045E] animate-in fade-in slide-in-from-top-2 duration-300 shadow-sm">
+            <div className="w-9 h-9 rounded-xl bg-[#0096C7] text-white flex items-center justify-center shrink-0">
+              <KeyRound className="w-5 h-5 text-white" />
             </div>
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-sm tracking-wide">Mật khẩu LAPTOP:</span>
-                <span className="px-3 py-1 bg-white font-mono font-extrabold text-base tracking-widest text-amber-950 border border-amber-300 rounded-lg shadow-inner select-all">
+                <span className="font-bold text-sm tracking-wide text-[#03045E]">Mật khẩu LAPTOP:</span>
+                <span className="px-3 py-1 bg-white font-mono font-extrabold text-base tracking-widest text-[#03045E] border border-[#0096C7] rounded-lg shadow-inner select-all">
                   {laptopPassword || '976431'}
                 </span>
-                <span className="text-[11px] font-semibold text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-md border border-amber-200">
+                <span className="text-[11px] font-semibold text-[#03045E] bg-[#ADE8F4] px-2 py-0.5 rounded-md border border-[#90E0EF]">
                   Firestore Secure
                 </span>
               </div>
-              <p className="text-xs text-amber-800 leading-relaxed">
+              <p className="text-xs text-[#03045E]/80 leading-relaxed font-medium">
                 Mật khẩu được lưu trữ bảo mật trên Firestore collection <code>settings/laptop</code>. Vui lòng ghi nhớ để đăng nhập máy.
               </p>
             </div>
@@ -650,7 +654,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
               <button
                 type="button"
                 onClick={onViewHistory}
-                className="shrink-0 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition-colors cursor-pointer self-start sm:self-center shadow-xs"
+                className="shrink-0 px-3.5 py-1.5 bg-[#0077B6] hover:bg-[#023E8A] text-white rounded-xl font-bold transition-colors cursor-pointer self-start sm:self-center shadow-xs"
               >
                 Xem trong Lịch sử mượn →
               </button>
@@ -658,12 +662,12 @@ export const BookingForm: React.FC<BookingFormProps> = ({
           </div>
         )}
 
-        {/* Submit button */}
+        {/* Submit button: nền --b3, chữ trắng đậm, hover --b2. Bị vô hiệu: nền --b7, chữ --b2 */}
         <div className="flex items-center justify-end pt-2">
           <button
             type="submit"
             disabled={isSubmitting || !device}
-            className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-600 text-white font-bold text-sm rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/35 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-8 py-3 bg-[#0077B6] hover:bg-[#023E8A] text-white font-bold text-sm rounded-xl shadow-md hover:shadow-lg active:scale-[0.99] transition-all disabled:bg-[#90E0EF] disabled:text-[#023E8A] disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-center gap-2 cursor-pointer"
           >
             {isSubmitting ? (
               <>
@@ -672,7 +676,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
               </>
             ) : (
               <>
-                <Send className="w-4 h-4" />
+                <Send className="w-4 h-4 text-white" />
                 <span>Đăng ký mượn • 登録する</span>
               </>
             )}

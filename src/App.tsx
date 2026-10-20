@@ -34,6 +34,7 @@ import { ActiveBorrowingsCard } from './ActiveBorrowingsCard';
 import { ReturnDeviceModal } from './ReturnDeviceModal';
 import { DeploymentGuideModal } from './DeploymentGuideModal';
 import { MailQueueViewerModal } from './MailQueueViewerModal';
+import { CabinetMapModal } from './CabinetMapModal';
 import { LoginScreen } from './LoginScreen';
 import { 
   Laptop, 
@@ -48,8 +49,38 @@ import {
   RefreshCw,
   AlertCircle,
   Mail,
-  ClipboardList
+  ClipboardList,
+  MapPin
 } from 'lucide-react';
+import { THEME_COLORS } from './theme';
+
+/**
+ * BẢNG MÀU XANH DƯƠNG HỆ THỐNG QUẢN LÝ THIẾT BỊ
+ * --b1: #03045E
+ * --b2: #023E8A
+ * --b3: #0077B6
+ * --b4: #0096C7
+ * --b5: #00B4D8
+ * --b6: #48CAE4
+ * --b7: #90E0EF
+ * --b8: #ADE8F4
+ * --b9: #CAF0F8
+ * --c-text: #03045E
+ * --c-danger: #C0392B
+ */
+export const APP_THEME = THEME_COLORS;
+export const APP_BG = THEME_COLORS.appBg;
+export const APP_B1 = THEME_COLORS.b1;
+export const APP_B2 = THEME_COLORS.b2;
+export const APP_B3 = THEME_COLORS.b3;
+export const APP_B4 = THEME_COLORS.b4;
+export const APP_B5 = THEME_COLORS.b5;
+export const APP_B6 = THEME_COLORS.b6;
+export const APP_B7 = THEME_COLORS.b7;
+export const APP_B8 = THEME_COLORS.b8;
+export const APP_B9 = THEME_COLORS.b9;
+export const APP_TEXT = THEME_COLORS.text;
+export const APP_DANGER = THEME_COLORS.danger;
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -63,6 +94,13 @@ export default function App() {
 
   // Return modal state
   const [selectedBookingForReturn, setSelectedBookingForReturn] = useState<BookingRecord | null>(null);
+
+  // Cabinet Map modal state
+  const [cabinetModalState, setCabinetModalState] = useState<{
+    isOpen: boolean;
+    device?: string | null;
+    laptopPassword?: string | null;
+  }>({ isOpen: false });
 
   // Tab state with URL hash synchronization: #dang-ky, #lich-su
   const getTabFromHash = (): 'register' | 'history' => {
@@ -241,12 +279,20 @@ export default function App() {
 
   const isLoginView = !isAuthLoading && !currentUser;
 
+  // Đồng bộ màu nền của body để không có dải trắng/xám khi cuộn trang
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.body.style.backgroundColor = isLoginView ? '#020617' : APP_BG;
+    }
+  }, [isLoginView]);
+
   return (
     <div
+      style={!isLoginView ? { backgroundColor: APP_BG } : undefined}
       className={
         isLoginView
           ? 'w-full h-dvh overflow-hidden bg-slate-950 text-slate-800 flex flex-col font-sans selection:bg-blue-600 selection:text-white relative'
-          : 'min-h-screen bg-slate-100/70 text-slate-800 flex flex-col font-sans selection:bg-blue-600 selection:text-white'
+          : 'min-h-screen text-slate-800 flex flex-col font-sans selection:bg-blue-600 selection:text-white'
       }
     >
       {/* Top Navigation Bar */}
@@ -254,7 +300,7 @@ export default function App() {
         className={
           isLoginView
             ? 'fixed top-0 left-0 right-0 z-50 bg-slate-950/40 backdrop-blur-md border-b border-white/10'
-            : 'sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs'
+            : 'sticky top-0 z-40 bg-[#03045E] border-b border-[#023E8A] shadow-xs'
         }
       >
         <div
@@ -267,19 +313,19 @@ export default function App() {
           {/* Logo & App Title: Ẩn trên màn hình đăng nhập, giữ nguyên sau khi đăng nhập */}
           {!isLoginView ? (
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-blue-700 via-indigo-600 to-sky-500 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
-                <Laptop className="w-5 h-5" />
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#0096C7] text-white flex items-center justify-center shadow-xs">
+                <Laptop className="w-5 h-5 text-white" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-base sm:text-lg text-slate-900 tracking-tight">
+                  <span className="font-extrabold text-base sm:text-lg text-white tracking-tight">
                     Quản lý mượn thiết bị
                   </span>
-                  <span className="hidden sm:inline-block text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200/70">
+                  <span className="hidden sm:inline-block text-[11px] font-bold text-[#03045E] bg-[#CAF0F8] px-2 py-0.5 rounded-full border border-[#48CAE4]">
                     DYM Vietnam
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 font-medium tracking-wide">
+                <p className="text-xs text-[#CAF0F8] font-semibold tracking-wide">
                   機器貸出管理システム (Song ngữ Việt – Nhật)
                 </p>
               </div>
@@ -295,12 +341,12 @@ export default function App() {
               className={
                 isLoginView
                   ? 'text-xs text-blue-200 bg-blue-500/20 hover:bg-blue-500/30 px-2.5 sm:px-3 py-1.5 rounded-xl border border-blue-400/30 transition-colors flex items-center gap-1.5 font-medium cursor-pointer'
-                  : 'text-xs text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-xl border border-blue-200 transition-colors flex items-center gap-1.5 font-medium'
+                  : 'text-xs text-[#CAF0F8] bg-transparent hover:bg-[#023E8A] px-3 py-1.5 rounded-xl border border-[#48CAE4] transition-colors flex items-center gap-1.5 font-bold shadow-xs cursor-pointer'
               }
               title="Xem danh sách email đã tạo và gửi tới y-p@dymvietnam.net"
             >
-              <Mail className={isLoginView ? 'w-4 h-4 text-blue-300' : 'w-4 h-4 text-blue-600'} />
-              <span className="text-[11px] sm:text-xs font-medium">Hàng đợi Email</span>
+              <Mail className={isLoginView ? 'w-4 h-4 text-blue-300' : 'w-4 h-4 text-[#48CAE4]'} />
+              <span className="text-[11px] sm:text-xs font-bold text-[#CAF0F8]">Hàng đợi Email</span>
             </button>
 
             <button
@@ -308,21 +354,34 @@ export default function App() {
               className={
                 isLoginView
                   ? 'text-xs text-slate-200 hover:text-white bg-white/10 hover:bg-white/20 px-2.5 sm:px-3 py-1.5 rounded-xl border border-white/15 transition-colors flex items-center gap-1.5 cursor-pointer'
-                  : 'text-xs text-slate-600 hover:text-blue-700 hover:bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 transition-colors flex items-center gap-1.5'
+                  : 'text-xs text-[#CAF0F8] bg-transparent hover:bg-[#023E8A] px-3 py-1.5 rounded-xl border border-[#48CAE4] transition-colors flex items-center gap-1.5 font-bold shadow-xs cursor-pointer'
               }
               title="Hướng dẫn cấu hình Firebase & Rules"
             >
-              <HelpCircle className={isLoginView ? 'w-4 h-4 text-blue-300' : 'w-4 h-4 text-blue-600'} />
-              <span className="text-[11px] sm:text-xs font-medium">Hướng dẫn & Rules</span>
+              <HelpCircle className={isLoginView ? 'w-4 h-4 text-blue-300' : 'w-4 h-4 text-[#48CAE4]'} />
+              <span className="text-[11px] sm:text-xs font-bold text-[#CAF0F8]">Hướng dẫn & Rules</span>
+            </button>
+
+            <button
+              onClick={() => setCabinetModalState({ isOpen: true })}
+              className={
+                isLoginView
+                  ? 'text-xs text-slate-200 hover:text-white bg-white/10 hover:bg-white/20 px-2.5 sm:px-3 py-1.5 rounded-xl border border-white/15 transition-colors flex items-center gap-1.5 cursor-pointer'
+                  : 'text-xs text-[#CAF0F8] bg-transparent hover:bg-[#023E8A] px-3 py-1.5 rounded-xl border border-[#48CAE4] transition-colors flex items-center gap-1.5 font-bold shadow-xs cursor-pointer'
+              }
+              title="Xem sơ đồ vị trí tủ thiết bị trong văn phòng"
+            >
+              <MapPin className={isLoginView ? 'w-4 h-4 text-blue-300' : 'w-4 h-4 text-[#48CAE4]'} />
+              <span className="text-[11px] sm:text-xs font-bold text-[#CAF0F8]">Sơ đồ tủ</span>
             </button>
 
             {currentUser ? (
-              <div className="flex items-center gap-3 pl-2 sm:pl-3 border-l border-slate-200">
+              <div className="flex items-center gap-3 pl-2 sm:pl-3 border-l border-[#023E8A]">
                 <div className="hidden sm:block text-right">
-                  <div className="text-xs font-bold text-slate-800 leading-tight">
+                  <div className="text-xs font-bold text-white leading-tight">
                     {currentUserName}
                   </div>
-                  <div className="text-[11px] text-slate-500 leading-tight">
+                  <div className="text-[11px] text-[#ADE8F4] font-medium leading-tight">
                     {currentUser.email}
                   </div>
                 </div>
@@ -330,16 +389,16 @@ export default function App() {
                   <img
                     src={currentUser.photoURL}
                     alt={currentUserName}
-                    className="w-8 h-8 rounded-full ring-2 ring-blue-500/30 object-cover"
+                    className="w-8 h-8 rounded-full ring-2 ring-[#0096C7] object-cover"
                   />
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-full bg-[#0096C7] text-white font-extrabold text-xs flex items-center justify-center">
                     {currentUserName.charAt(0)}
                   </div>
                 )}
                 <button
                   onClick={handleSignOut}
-                  className="p-1.5 sm:px-3 sm:py-1.5 rounded-xl text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 text-xs font-semibold transition-all flex items-center gap-1.5"
+                  className="p-1.5 sm:px-3 sm:py-1.5 rounded-xl text-[#ADE8F4] hover:bg-[#023E8A] hover:text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
                   title="Đăng xuất"
                 >
                   <LogOut className="w-4 h-4" />
@@ -372,24 +431,24 @@ export default function App() {
         <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-6">
           {/* Thanh điều hướng dạng tab ngang trên thiết bị di động (< 768px / md:hidden) */}
           <div className="md:hidden w-full mb-5">
-            <div className="flex items-center gap-2 p-1.5 bg-slate-200/80 backdrop-blur-xs rounded-2xl shadow-inner">
+            <div className="flex items-stretch gap-2 p-1.5 bg-[#023E8A] rounded-2xl shadow-sm border border-[#0077B6]/50">
               {/* Tab 1 Mobile */}
               <button
                 type="button"
                 onClick={() => handleTabChange('register')}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                className={`flex-1 flex flex-col items-center justify-center gap-1 py-2 px-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   activeTab === 'register'
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 font-bold scale-[1.01]'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/40'
+                    ? 'bg-white text-[#023E8A] shadow-md font-bold scale-[1.01]'
+                    : 'text-[#CAF0F8] hover:bg-[#0077B6]'
                 }`}
               >
-                <Laptop className={`w-3.5 h-3.5 shrink-0 ${activeTab === 'register' ? 'text-white' : 'text-blue-600'}`} />
-                <span className="truncate">Đăng ký mượn</span>
+                <div className="flex items-center justify-center gap-1.5 text-center">
+                  <Laptop className={`w-3.5 h-3.5 shrink-0 ${activeTab === 'register' ? 'text-[#023E8A]' : 'text-white'}`} />
+                  <span className="leading-tight">Đăng ký mượn</span>
+                </div>
                 {userActiveBookingsCount > 0 && (
-                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                    activeTab === 'register' ? 'bg-amber-400 text-slate-900' : 'bg-amber-100 text-amber-800'
-                  }`}>
-                    {userActiveBookingsCount}
+                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-[#CAF0F8] text-[#03045E]">
+                    {userActiveBookingsCount} đang giữ
                   </span>
                 )}
               </button>
@@ -398,54 +457,60 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => handleTabChange('history')}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                className={`flex-1 flex flex-col items-center justify-center gap-1 py-2 px-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   activeTab === 'history'
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 font-bold scale-[1.01]'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/40'
+                    ? 'bg-white text-[#023E8A] shadow-md font-bold scale-[1.01]'
+                    : 'text-[#CAF0F8] hover:bg-[#0077B6]'
                 }`}
               >
-                <ClipboardList className={`w-3.5 h-3.5 shrink-0 ${activeTab === 'history' ? 'text-white' : 'text-indigo-600'}`} />
-                <span className="truncate">Lịch sử mượn</span>
-                {overdueCount > 0 && (
-                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-600 text-white animate-pulse">
-                    {overdueCount}
+                <div className="flex items-center justify-center gap-1.5 text-center">
+                  <ClipboardList className={`w-3.5 h-3.5 shrink-0 ${activeTab === 'history' ? 'text-[#023E8A]' : 'text-white'}`} />
+                  <span className="leading-tight">Lịch sử mượn</span>
+                </div>
+                <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                  {overdueCount > 0 && (
+                    <span className="px-1.5 py-0.5 rounded-full text-[10px] font-extrabold bg-[#C0392B] text-white animate-pulse">
+                      {overdueCount} quá giờ
+                    </span>
+                  )}
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#CAF0F8] text-[#03045E]">
+                    {bookings.length} bản ghi
                   </span>
-                )}
-                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                  activeTab === 'history' ? 'bg-blue-700 text-white' : 'bg-slate-300 text-slate-700'
-                }`}>
-                  {bookings.length}
-                </span>
+                </div>
               </button>
             </div>
           </div>
 
           <div className="flex flex-col md:flex-row items-start gap-6">
-            {/* SIDEBAR BÊN TRÁI (Hiển thị từ md trở lên, rộng 250px, sticky dưới header) */}
-            <aside className="hidden md:flex flex-col w-[250px] shrink-0 sticky top-[80px] self-start">
-              <div className="bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/90 p-3 shadow-xs space-y-2.5">
+            {/* SIDEBAR BÊN TRÁI (Hiển thị từ md trở lên, rộng 260px, sticky dưới header) */}
+            <aside className="hidden md:flex flex-col w-[260px] shrink-0 sticky top-[80px] self-start">
+              <div className="bg-[#023E8A] rounded-2xl border border-[#0077B6]/50 p-3 shadow-md space-y-2.5">
                 {/* TAB 1: Đăng ký mượn • 機器貸出登録 */}
                 <button
                   type="button"
                   onClick={() => handleTabChange('register')}
-                  className={`w-full text-left px-3.5 py-3 rounded-xl transition-all flex items-center justify-between gap-2.5 cursor-pointer ${
+                  className={`w-full text-left p-3.5 rounded-xl transition-all flex flex-col gap-2 cursor-pointer ${
                     activeTab === 'register'
-                      ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25 font-bold scale-[1.01]'
-                      : 'bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border border-slate-200/80 font-semibold'
+                      ? 'bg-white text-[#023E8A] shadow-md font-bold scale-[1.01]'
+                      : 'bg-transparent hover:bg-[#0077B6] text-[#CAF0F8] font-semibold border border-transparent'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <Laptop className={`w-4 h-4 shrink-0 ${activeTab === 'register' ? 'text-white' : 'text-blue-600'}`} />
-                    <span className="text-xs truncate">Đăng ký mượn • 機器貸出登録</span>
+                  {/* Dòng 1: icon + tên tab (cho phép xuống dòng nếu dài, không cắt chữ) */}
+                  <div className="flex items-start gap-2.5 w-full">
+                    <Laptop className={`w-4 h-4 shrink-0 mt-0.5 ${activeTab === 'register' ? 'text-[#023E8A]' : 'text-white'}`} />
+                    <div className={`text-xs leading-snug break-words ${activeTab === 'register' ? 'font-bold text-[#023E8A]' : 'font-semibold text-[#CAF0F8]'}`}>
+                      <span>Đăng ký mượn</span>
+                      <span className="block text-[11px] opacity-90 font-normal mt-0.5">機器貸出登録</span>
+                    </div>
                   </div>
+
+                  {/* Dòng 2: các huy hiệu trạng thái xếp ngang nhau, nằm dưới tên tab, thẳng lề với chữ */}
                   {userActiveBookingsCount > 0 && (
-                    <span className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                      activeTab === 'register'
-                        ? 'bg-amber-300 text-amber-950 shadow-xs'
-                        : 'bg-amber-100 text-amber-800 border border-amber-300'
-                    } animate-pulse`}>
-                      {userActiveBookingsCount} đang giữ
-                    </span>
+                    <div className="pl-[26px] flex flex-wrap items-center gap-1.5 pt-0.5">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#CAF0F8] text-[#03045E]">
+                        {userActiveBookingsCount} đang giữ
+                      </span>
+                    </div>
                   )}
                 </button>
 
@@ -453,33 +518,33 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => handleTabChange('history')}
-                  className={`w-full text-left px-3.5 py-3 rounded-xl transition-all flex items-center justify-between gap-2.5 cursor-pointer ${
+                  className={`w-full text-left p-3.5 rounded-xl transition-all flex flex-col gap-2 cursor-pointer ${
                     activeTab === 'history'
-                      ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25 font-bold scale-[1.01]'
-                      : 'bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border border-slate-200/80 font-semibold'
+                      ? 'bg-white text-[#023E8A] shadow-md font-bold scale-[1.01]'
+                      : 'bg-transparent hover:bg-[#0077B6] text-[#CAF0F8] font-semibold border border-transparent'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <ClipboardList className={`w-4 h-4 shrink-0 ${activeTab === 'history' ? 'text-white' : 'text-indigo-600'}`} />
-                    <span className="text-xs truncate">Lịch sử mượn • 貸出一覧</span>
+                  {/* Dòng 1: icon + tên tab (cho phép xuống dòng nếu dài, không cắt chữ) */}
+                  <div className="flex items-start gap-2.5 w-full">
+                    <ClipboardList className={`w-4 h-4 shrink-0 mt-0.5 ${activeTab === 'history' ? 'text-[#023E8A]' : 'text-white'}`} />
+                    <div className={`text-xs leading-snug break-words ${activeTab === 'history' ? 'font-bold text-[#023E8A]' : 'font-semibold text-[#CAF0F8]'}`}>
+                      <span>Lịch sử mượn</span>
+                      <span className="block text-[11px] opacity-90 font-normal mt-0.5">貸出一覧</span>
+                    </div>
                   </div>
-                  <div className="shrink-0 flex items-center gap-1.5">
+
+                  {/* Dòng 2: các huy hiệu trạng thái xếp ngang nhau, nằm dưới tên tab, thẳng lề với chữ */}
+                  <div className="pl-[26px] flex flex-wrap items-center gap-1.5 pt-0.5">
                     {overdueCount > 0 && (
                       <span
-                        className="px-1.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-600 text-white shadow-xs animate-pulse"
+                        className="px-1.5 py-0.5 rounded-full text-[10px] font-extrabold bg-[#C0392B] text-white shadow-xs animate-pulse"
                         title={`${overdueCount} lượt mượn quá giờ chưa trả`}
                       >
                         {overdueCount} quá giờ
                       </span>
                     )}
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
-                        activeTab === 'history'
-                          ? 'bg-blue-700 text-white border border-blue-400/30'
-                          : 'bg-slate-100 text-slate-700 border border-slate-200'
-                      }`}
-                    >
-                      {bookings.length}
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#CAF0F8] text-[#03045E]">
+                      {bookings.length} bản ghi
                     </span>
                   </div>
                 </button>
@@ -497,8 +562,12 @@ export default function App() {
                       currentUserEmail={currentUser.email || ''}
                       currentUserName={currentUserName}
                       activeBookings={bookings}
-                      onBookingSuccess={() => {
-                        // Realtime listener automatically updates
+                      onBookingSuccess={(dev, pw) => {
+                        setCabinetModalState({
+                          isOpen: true,
+                          device: dev,
+                          laptopPassword: pw,
+                        });
                       }}
                       onViewHistory={() => handleTabChange('history')}
                     />
@@ -511,6 +580,12 @@ export default function App() {
                       currentUserName={currentUserName}
                       bookings={bookings}
                       onOpenReturnModal={(b) => setSelectedBookingForReturn(b)}
+                      onOpenCabinetMap={(dev) => {
+                        setCabinetModalState({
+                          isOpen: true,
+                          device: dev,
+                        });
+                      }}
                     />
                   </section>
                 </div>
@@ -520,9 +595,9 @@ export default function App() {
               {activeTab === 'history' && (
                 <div className="w-full space-y-6 animate-in fade-in duration-200">
                   {isDataLoading ? (
-                    <div className="bg-white rounded-2xl p-12 text-center border border-slate-200">
-                      <div className="inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-2" />
-                      <p className="text-xs text-slate-500">Đang đồng bộ dữ liệu thời gian thực...</p>
+                    <div className="bg-white rounded-2xl p-12 text-center border border-[#ADE8F4]">
+                      <div className="inline-block w-6 h-6 border-2 border-[#0077B6] border-t-transparent rounded-full animate-spin mb-2" />
+                      <p className="text-xs text-[#03045E]">Đang đồng bộ dữ liệu thời gian thực...</p>
                     </div>
                   ) : (
                     <BookingTable
@@ -560,9 +635,18 @@ export default function App() {
         />
       )}
 
-      {/* Footer (only shown when not on fullscreen LoginScreen) */}
+      {/* Cabinet Map Modal */}
+      <CabinetMapModal
+        isOpen={cabinetModalState.isOpen}
+        onClose={() => setCabinetModalState({ isOpen: false })}
+        userEmail={currentUser?.email || ''}
+        device={cabinetModalState.device}
+        laptopPassword={cabinetModalState.laptopPassword}
+      />
+
+      {/* Footer (chân trang trong suốt, chữ --b2 #023E8A) */}
       {!isLoginView && (
-        <footer className="mt-auto py-4 border-t border-slate-200 bg-white/70 text-center text-xs text-slate-500">
+        <footer className="mt-auto py-5 border-t border-[#ADE8F4] bg-transparent text-center text-xs text-[#023E8A] font-semibold">
           <p>Hệ thống Quản lý mượn thiết bị • DYM Vietnam Co., Ltd.</p>
         </footer>
       )}

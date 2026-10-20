@@ -1,0 +1,30 @@
+{
+  "grid": {
+    "cols": 40,
+    "rows": 22,
+    "cellWidth": 32,
+    "cellHeight": 30
+  },
+  "deviceLocation": {
+    "label": "TỦ",
+    "col": 3,
+    "row": 7,
+    "deviceTypes": ["CAMERA 1", "CAMERA 2", "CAMERA 3", "CAMERA 4", "CAMERA 5", "LAPTOP"],
+    "description": "Tủ thiết bị công ty DYM (giữa khối VINH và HA, phía cửa kính)"
+  },
+  "cells": [
+    { "id": "window-side", "label": "窓ガラス側 • Phía cửa kính", "col": 1, "row": 5, "colSpan": 38, "rowSpan": 1, "bgColor": "#E0F2FE", "textColor": "#0369A1", "walkable": false },
+    { "id": "header-vinh", "label": "VINH", "col": 1, "row": 7, "colSpan": 2, "rowSpan": 1, "bgColor": "#546E7A", "textColor": "#FFFFFF", "walkable": false },
+    { "id": "cabinet-tu", "label": "TỦ", "col": 3, "row": 7, "colSpan": 1, "rowSpan": 1, "bgColor": "#FEF2F2", "textColor": "#DC2626", "borderColor": "#DC2626", "isCabinet": true, "walkable": false },
+    { "id": "header-ha", "label": "HA", "col": 5, "row": 7, "colSpan": 2, "rowSpan": 1, "bgColor": "#546E7A", "textColor": "#FFFFFF", "walkable": false },
+    { "id": "header-matsumoto", "label": "松本", "col": 11, "row": 7, "colSpan": 2, "rowSpan": 1, "bgColor": "#546E7A", "textColor": "#FFFFFF", "walkable": false },
+    { "id": "cabinet-copy", "label": "コピー機＆管理部のキャビネット", "col": 6, "row": 14, "colSpan": 5, "rowSpan": 1, "bgColor": "#FCE7F3", "textColor": "#831843", "walkable": false },
+    { "id": "pantry", "label": "PANTRY", "col": 6, "row": 16, "colSpan": 2, "rowSpan": 5, "bgColor": "#FEF3C7", "textColor": "#DC2626", "walkable": false },
+    { "id": "mtg-c", "label": "MTGルーム (MTG C)", "col": 8, "row": 15, "colSpan": 3, "rowSpan": 2, "bgColor": "#DBEAFE", "textColor": "#1E3A8A", "walkable": false },
+    { "id": "server-room", "label": "サーバールーム SERVER", "col": 8, "row": 17, "colSpan": 3, "rowSpan": 1, "bgColor": "#F8FAFC", "textColor": "#0F172A", "walkable": false },
+    { "id": "mtg-b", "label": "MTGルーム (MTG B)", "col": 8, "row": 18, "colSpan": 3, "rowSpan": 3, "bgColor": "#DBEAFE", "textColor": "#1E3A8A", "walkable": false },
+    { "id": "logo-box", "label": "LOGO", "col": 18, "row": 13, "colSpan": 3, "rowSpan": 1, "bgColor": "#DCFCE7", "textColor": "#15803D", "walkable": false },
+    { "id": "main-entrance", "label": "入口-EXIT", "col": 18, "row": 15, "colSpan": 3, "rowSpan": 1, "bgColor": "#FFFFFF", "textColor": "#DC2626", "walkable": false },
+    { "id": "rest-room", "label": "休憩室", "col": 36, "row": 20, "colSpan": 3, "rowSpan": 2, "bgColor": "#FCE7F3", "textColor": "#831843", "walkable": false }
+  ]
+}

@@ -1,10 +1,11 @@
 import React, { useState, useRef } from 'react';
-import { Camera, Upload, AlertCircle, CheckCircle2, X } from 'lucide-react';
+import { Camera, Upload, AlertCircle, CheckCircle2, X, MapPin } from 'lucide-react';
 import { compressImage, uploadReturnPhoto, queueNotificationEmail, db } from './firebase';
 import { generateEmailHtml } from './emailTemplates';
 import { doc, updateDoc } from 'firebase/firestore';
 import { BookingRecord, ADMIN_EMAIL } from './types';
 import confetti from 'canvas-confetti';
+import { OfficeMapCanvas } from './OfficeMapCanvas';
 
 interface ReturnDeviceModalProps {
   booking: BookingRecord | null;
@@ -129,10 +130,10 @@ export const ReturnDeviceModal: React.FC<ReturnDeviceModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-xl w-full max-h-[92vh] flex flex-col overflow-hidden border border-slate-200">
         {/* Header */}
-        <div className="px-6 py-4 bg-gradient-to-r from-emerald-600 to-teal-700 text-white flex items-center justify-between">
+        <div className="px-6 py-4 bg-gradient-to-r from-emerald-600 to-teal-700 text-white flex items-center justify-between shrink-0">
           <div>
             <h3 className="text-lg font-bold flex items-center gap-2">
               <Camera className="w-5 h-5" />
@@ -145,14 +146,14 @@ export const ReturnDeviceModal: React.FC<ReturnDeviceModalProps> = ({
           <button
             onClick={onClose}
             disabled={uploading}
-            className="p-1 rounded-lg text-emerald-100 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1 rounded-lg text-emerald-100 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-4">
+        <div className="p-4 sm:p-6 space-y-4 overflow-y-auto">
           <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 text-xs text-emerald-900 space-y-1">
             <div className="font-semibold text-emerald-950 flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -161,6 +162,15 @@ export const ReturnDeviceModal: React.FC<ReturnDeviceModalProps> = ({
             <p className="text-slate-600 leading-relaxed">
               Theo quy định, bạn <strong className="text-slate-900">bắt buộc</strong> phải chụp ảnh thiết bị đã được cất/đặt đúng vị trí ban đầu để hệ thống lưu bằng chứng hoàn tất.
             </p>
+          </div>
+
+          {/* Sơ đồ vị trí tủ thiết bị khi trả */}
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs font-bold text-red-600">
+              <MapPin className="w-4 h-4 text-red-600 shrink-0" />
+              <span>Đặt thiết bị về đúng chỗ tủ • 機器をキャビネットの定位置へ戻してください</span>
+            </div>
+            <OfficeMapCanvas userEmail={booking.registrantEmail} isCompact={true} />
           </div>
 
           {/* Booking Summary */}
@@ -285,7 +295,7 @@ export const ReturnDeviceModal: React.FC<ReturnDeviceModalProps> = ({
             type="button"
             onClick={handleConfirmReturn}
             disabled={uploading || !selectedFile || isProcessingImage}
-            className="px-5 py-2 text-xs font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl hover:from-emerald-700 hover:to-teal-700 shadow-md shadow-emerald-500/20 transition-all disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+            className="px-5 py-2 text-xs font-bold text-white bg-[#0077B6] rounded-xl hover:bg-[#023E8A] shadow-md transition-all disabled:bg-[#90E0EF] disabled:text-[#023E8A] disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
           >
             {uploading ? (
               <>

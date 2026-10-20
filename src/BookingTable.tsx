@@ -65,20 +65,20 @@ export const BookingTable: React.FC<BookingTableProps> = ({
   });
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/80 overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-sm border border-[#ADE8F4] overflow-hidden">
       {/* Table Header & Controls */}
-      <div className="p-4 sm:p-5 border-b border-slate-200 bg-slate-50/70 space-y-3.5">
+      <div className="p-4 sm:p-5 border-b border-[#ADE8F4] bg-[#CAF0F8]/40 space-y-3.5">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-base sm:text-lg font-bold text-slate-800">
+          <h3 className="text-base sm:text-lg font-bold text-[#03045E]">
             Danh sách mượn thiết bị • 貸出一覧
           </h3>
 
           {/* Quick status summary counts */}
           <div className="flex items-center gap-2 text-xs">
-            <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
+            <span className="px-2.5 py-1 rounded-lg bg-white text-[#03045E] border border-[#90E0EF] font-medium">
               Đã trả: {bookings.filter(b => b.isReturned).length}
             </span>
-            <span className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 font-medium">
+            <span className="px-2.5 py-1 rounded-lg bg-[#C0392B] text-white font-bold shadow-xs">
               Quá giờ: {bookings.filter(b => isBookingOverdue(b)).length}
             </span>
           </div>
@@ -88,13 +88,13 @@ export const BookingTable: React.FC<BookingTableProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
           {/* Search query */}
           <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-[#0096C7] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Tìm theo tên, email, team..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600"
+              className="w-full pl-9 pr-3 py-2 bg-white border border-[#90E0EF] rounded-xl text-xs text-[#03045E] focus:outline-none focus:ring-2 focus:ring-[#ADE8F4] focus:border-[#0096C7]"
             />
           </div>
 
@@ -104,12 +104,12 @@ export const BookingTable: React.FC<BookingTableProps> = ({
               type="date"
               value={filterDate}
               onChange={(e) => setFilterDate(e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 cursor-pointer"
+              className="w-full px-3 py-2 bg-white border border-[#90E0EF] rounded-xl text-xs text-[#03045E] focus:outline-none focus:ring-2 focus:ring-[#ADE8F4] focus:border-[#0096C7] cursor-pointer"
             />
             {filterDate && (
               <button 
                 onClick={() => setFilterDate('')} 
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] bg-slate-200 hover:bg-slate-300 px-1.5 py-0.5 rounded text-slate-600"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] bg-[#0077B6]/15 hover:bg-[#0077B6] hover:text-white px-1.5 py-0.5 rounded text-[#0077B6] font-semibold"
               >
                 Xóa
               </button>
@@ -121,7 +121,7 @@ export const BookingTable: React.FC<BookingTableProps> = ({
             <select
               value={filterDevice}
               onChange={(e) => setFilterDevice(e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 cursor-pointer"
+              className="w-full px-3 py-2 bg-white border border-[#90E0EF] rounded-xl text-xs font-medium text-[#03045E] focus:outline-none focus:ring-2 focus:ring-[#ADE8F4] focus:border-[#0096C7] cursor-pointer"
             >
               <option value="ALL">Tất cả thiết bị (All Devices)</option>
               {DEVICE_LIST.map((d) => (
@@ -135,7 +135,7 @@ export const BookingTable: React.FC<BookingTableProps> = ({
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 cursor-pointer"
+              className="w-full px-3 py-2 bg-white border border-[#90E0EF] rounded-xl text-xs font-medium text-[#03045E] focus:outline-none focus:ring-2 focus:ring-[#ADE8F4] focus:border-[#0096C7] cursor-pointer"
             >
               <option value="ALL">Tất cả trạng thái (All Status)</option>
               <option value="IN_USE">Đang mượn (Trong giờ)</option>
@@ -150,7 +150,7 @@ export const BookingTable: React.FC<BookingTableProps> = ({
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-left border-collapse text-xs min-w-[780px]">
           <thead>
-            <tr className="bg-slate-100/80 text-slate-600 font-semibold uppercase tracking-wider border-b border-slate-200">
+            <tr className="bg-[#023E8A] text-white font-bold uppercase tracking-wider border-b border-[#0077B6]">
               <th className="py-3.5 px-4">Ngày 日付</th>
               <th className="py-3.5 px-3">Bắt đầu 開始</th>
               <th className="py-3.5 px-3">Kết thúc 終了</th>
@@ -162,12 +162,12 @@ export const BookingTable: React.FC<BookingTableProps> = ({
               <th className="py-3.5 px-4 text-right">Thao tác</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-200">
+          <tbody className="divide-y divide-[#ADE8F4]/60">
             {filteredBookings.length === 0 ? (
               <tr>
-                <td colSpan={9} className="py-12 text-center text-slate-400">
+                <td colSpan={9} className="py-12 text-center text-[#03045E]/60">
                   <div className="flex flex-col items-center justify-center gap-2">
-                    <Filter className="w-8 h-8 text-slate-300 stroke-[1.5]" />
+                    <Filter className="w-8 h-8 text-[#0096C7] stroke-[1.5]" />
                     <p className="text-sm font-medium">Không tìm thấy lượt mượn nào phù hợp với bộ lọc.</p>
                   </div>
                 </td>
@@ -183,12 +183,12 @@ export const BookingTable: React.FC<BookingTableProps> = ({
                 return (
                   <tr
                     key={b.id}
-                    className={`transition-colors duration-150 hover:bg-slate-50/90 ${
+                    className={`transition-colors duration-150 hover:bg-[#CAF0F8]/30 ${
                       isOverdue 
-                        ? 'bg-rose-50/80 text-rose-950 font-medium' 
+                        ? 'bg-[#C0392B]/10 text-[#03045E] font-medium' 
                         : b.isReturned 
-                        ? 'bg-white text-slate-700' 
-                        : 'bg-blue-50/30 text-slate-800'
+                        ? 'bg-white text-[#03045E]/85' 
+                        : 'bg-[#CAF0F8]/20 text-[#03045E]'
                     }`}
                   >
                     {/* Ngày */}
@@ -199,7 +199,7 @@ export const BookingTable: React.FC<BookingTableProps> = ({
                     {/* Bắt đầu */}
                     <td className="py-3 px-3 font-medium whitespace-nowrap">
                       <span className="inline-flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-slate-400" />
+                        <Clock className="w-3 h-3 text-[#0096C7]" />
                         {b.startTime}
                       </span>
                     </td>
@@ -207,7 +207,7 @@ export const BookingTable: React.FC<BookingTableProps> = ({
                     {/* Kết thúc */}
                     <td className="py-3 px-3 font-medium whitespace-nowrap">
                       <span className="inline-flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-slate-400" />
+                        <Clock className="w-3 h-3 text-[#0096C7]" />
                         {b.endTime}
                       </span>
                     </td>
@@ -216,8 +216,8 @@ export const BookingTable: React.FC<BookingTableProps> = ({
                     <td className="py-3 px-4 whitespace-nowrap">
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold ${
                         b.device === 'LAPTOP'
-                          ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                          : 'bg-slate-200 text-slate-800'
+                          ? 'bg-[#CAF0F8] text-[#03045E] border border-[#90E0EF]'
+                          : 'bg-[#ADE8F4] text-[#03045E] border border-[#90E0EF]'
                       }`}>
                         {b.device === 'LAPTOP' ? <Laptop className="w-3.5 h-3.5" /> : <Camera className="w-3.5 h-3.5" />}
                         {b.device}
@@ -226,24 +226,24 @@ export const BookingTable: React.FC<BookingTableProps> = ({
 
                     {/* Team */}
                     <td className="py-3 px-3 whitespace-nowrap">
-                      <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-medium border border-slate-200">
+                      <span className="px-2 py-0.5 rounded-md bg-white text-[#03045E] font-medium border border-[#ADE8F4]">
                         {b.team}
                       </span>
                     </td>
 
                     {/* Người đăng ký */}
                     <td className="py-3 px-4">
-                      <div className="font-semibold text-slate-900 leading-tight">
+                      <div className="font-semibold text-[#03045E] leading-tight">
                         {b.registrantName}
                       </div>
-                      <div className="text-[11px] text-slate-500 truncate max-w-[200px] xl:max-w-none">
+                      <div className="text-[11px] text-[#023E8A]/70 truncate max-w-[200px] xl:max-w-none">
                         {b.registrantEmail}
                       </div>
                     </td>
 
                     {/* Mục đích */}
                     <td className="py-3 px-4 max-w-[240px] lg:max-w-[360px] xl:max-w-[500px]">
-                      <p className="line-clamp-2 text-slate-600" title={b.purpose}>
+                      <p className="line-clamp-2 text-[#03045E]/85" title={b.purpose}>
                         {b.purpose}
                       </p>
                     </td>
@@ -252,8 +252,8 @@ export const BookingTable: React.FC<BookingTableProps> = ({
                     <td className="py-3 px-4 text-center whitespace-nowrap">
                       {b.isReturned ? (
                         <div className="flex flex-col items-center gap-1.5">
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white text-[#03045E] border border-[#90E0EF] text-[11px] font-bold">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-[#0096C7]" />
                             Đã trả
                           </span>
 
@@ -262,7 +262,7 @@ export const BookingTable: React.FC<BookingTableProps> = ({
                             <button
                               type="button"
                               onClick={() => setPreviewImageUrl(b.returnPhotoUrl || null)}
-                              className="group relative block w-10 h-10 rounded-lg overflow-hidden border border-emerald-300 shadow-xs hover:ring-2 hover:ring-emerald-400 transition-all cursor-pointer"
+                              className="group relative block w-10 h-10 rounded-lg overflow-hidden border border-[#0096C7] shadow-xs hover:ring-2 hover:ring-[#0096C7] transition-all cursor-pointer"
                               title="Bấm để xem ảnh phóng to"
                             >
                               <img
@@ -275,22 +275,22 @@ export const BookingTable: React.FC<BookingTableProps> = ({
                               </div>
                             </button>
                           )}
-                          <span className="text-[10px] text-slate-400">
+                          <span className="text-[10px] text-[#023E8A]/70">
                             {formatDateTimeDisplay(b.returnedAt)}
                           </span>
                         </div>
                       ) : isOverdue ? (
                         <div className="flex flex-col items-center gap-1">
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-200 text-rose-900 text-[11px] font-bold animate-pulse">
-                            <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#C0392B] text-white text-[11px] font-extrabold animate-pulse">
+                            <AlertTriangle className="w-3.5 h-3.5" />
                             QUÁ GIỜ CHƯA TRẢ
                           </span>
-                          <span className="text-[10px] text-rose-600 font-semibold">
+                          <span className="text-[10px] text-[#C0392B] font-bold">
                             Cần trả ngay
                           </span>
                         </div>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[11px] font-semibold">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#CAF0F8] text-[#03045E] border border-[#ADE8F4] text-[11px] font-semibold">
                           Đang mượn
                         </span>
                       )}
@@ -302,15 +302,15 @@ export const BookingTable: React.FC<BookingTableProps> = ({
                         <button
                           type="button"
                           onClick={() => onOpenReturnModal(b)}
-                          className="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-xl shadow-xs hover:shadow-md transition-all active:scale-95 flex items-center gap-1.5 ml-auto text-xs cursor-pointer"
+                          className="px-3 py-1.5 bg-[#0077B6] hover:bg-[#023E8A] text-white font-bold rounded-xl shadow-xs hover:shadow-md transition-all active:scale-95 flex items-center gap-1.5 ml-auto text-xs cursor-pointer"
                         >
                           <RotateCcw className="w-3.5 h-3.5" />
                           <span>Trả thiết bị</span>
                         </button>
                       ) : b.isReturned ? (
-                        <span className="text-slate-400 text-[11px] italic">Hoàn tất</span>
+                        <span className="text-[#03045E]/50 text-[11px] italic">Hoàn tất</span>
                       ) : (
-                        <span className="text-slate-400 text-[11px] italic" title="Chỉ người mượn hoặc y-p@dymvietnam.net mới có quyền bấm">
+                        <span className="text-[#03045E]/50 text-[11px] italic" title="Chỉ người mượn hoặc y-p@dymvietnam.net mới có quyền bấm">
                           Chờ trả
                         </span>
                       )}
@@ -324,10 +324,10 @@ export const BookingTable: React.FC<BookingTableProps> = ({
       </div>
 
       {/* Mobile Card List (Hiển thị thẻ dễ đọc trên điện thoại) */}
-      <div className="md:hidden divide-y divide-slate-200">
+      <div className="md:hidden divide-y divide-[#ADE8F4]/60">
         {filteredBookings.length === 0 ? (
-          <div className="p-8 text-center text-slate-400">
-            <Filter className="w-8 h-8 mx-auto text-slate-300 stroke-[1.5] mb-2" />
+          <div className="p-8 text-center text-[#03045E]/60">
+            <Filter className="w-8 h-8 mx-auto text-[#0096C7] stroke-[1.5] mb-2" />
             <p className="text-sm font-medium">Không tìm thấy lượt mượn nào phù hợp với bộ lọc.</p>
           </div>
         ) : (
@@ -343,35 +343,35 @@ export const BookingTable: React.FC<BookingTableProps> = ({
                 key={b.id} 
                 className={`p-4 space-y-3 transition-colors ${
                   isOverdue 
-                    ? 'bg-rose-50/70' 
+                    ? 'bg-[#C0392B]/10 border-l-4 border-l-[#C0392B]' 
                     : b.isReturned 
                     ? 'bg-white' 
-                    : 'bg-blue-50/20'
+                    : 'bg-[#CAF0F8]/20'
                 }`}
               >
                 {/* Header thẻ: Thiết bị + Trạng thái */}
                 <div className="flex items-center justify-between gap-2">
                   <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold ${
                     b.device === 'LAPTOP'
-                      ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                      : 'bg-slate-200 text-slate-800'
+                      ? 'bg-[#CAF0F8] text-[#03045E] border border-[#90E0EF]'
+                      : 'bg-[#ADE8F4] text-[#03045E] border border-[#90E0EF]'
                   }`}>
                     {b.device === 'LAPTOP' ? <Laptop className="w-3.5 h-3.5" /> : <Camera className="w-3.5 h-3.5" />}
                     {b.device}
                   </span>
 
                   {b.isReturned ? (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white text-[#03045E] border border-[#90E0EF] text-[11px] font-bold">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#0096C7]" />
                       Đã trả
                     </span>
                   ) : isOverdue ? (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-200 text-rose-900 text-[11px] font-bold animate-pulse">
-                      <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#C0392B] text-white text-[11px] font-extrabold animate-pulse">
+                      <AlertTriangle className="w-3.5 h-3.5" />
                       QUÁ GIỜ CHƯA TRẢ
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[11px] font-semibold">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#CAF0F8] text-[#03045E] border border-[#ADE8F4] text-[11px] font-semibold">
                       Đang mượn
                     </span>
                   )}
@@ -379,12 +379,12 @@ export const BookingTable: React.FC<BookingTableProps> = ({
 
                 {/* Ngày & Khung giờ */}
                 <div className="flex items-center gap-4 text-xs">
-                  <div className="flex items-center gap-1.5 font-semibold text-slate-900">
-                    <Calendar className="w-3.5 h-3.5 text-blue-600" />
+                  <div className="flex items-center gap-1.5 font-semibold text-[#03045E]">
+                    <Calendar className="w-3.5 h-3.5 text-[#0096C7]" />
                     <span>{formatDateDisplay(b.date)}</span>
                   </div>
-                  <div className="flex items-center gap-1 text-slate-500 font-medium">
-                    <Clock className="w-3.5 h-3.5 text-slate-400" />
+                  <div className="flex items-center gap-1 text-[#023E8A]/75 font-medium">
+                    <Clock className="w-3.5 h-3.5 text-[#0096C7]" />
                     <span>{b.startTime} - {b.endTime}</span>
                   </div>
                 </div>
@@ -392,17 +392,17 @@ export const BookingTable: React.FC<BookingTableProps> = ({
                 {/* Người đăng ký & Team */}
                 <div className="flex items-center justify-between gap-2 text-xs">
                   <div className="min-w-0">
-                    <span className="font-bold text-slate-900">{b.registrantName}</span>
-                    <span className="text-slate-400 text-[11px] ml-1.5 truncate inline-block max-w-[140px] align-bottom">({b.registrantEmail})</span>
+                    <span className="font-bold text-[#03045E]">{b.registrantName}</span>
+                    <span className="text-[#023E8A]/60 text-[11px] ml-1.5 truncate inline-block max-w-[140px] align-bottom">({b.registrantEmail})</span>
                   </div>
-                  <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold border border-slate-200 shrink-0 text-[11px]">
+                  <span className="px-2 py-0.5 rounded-md bg-white text-[#03045E] font-bold border border-[#ADE8F4] shrink-0 text-[11px]">
                     {b.team}
                   </span>
                 </div>
 
                 {/* Mục đích */}
-                <div className="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                  <span className="font-semibold text-slate-700">Mục đích: </span>
+                <div className="text-xs text-[#03045E]/85 bg-[#CAF0F8]/40 p-2.5 rounded-xl border border-[#ADE8F4]">
+                  <span className="font-semibold text-[#03045E]">Mục đích: </span>
                   {b.purpose}
                 </div>
 
@@ -414,7 +414,7 @@ export const BookingTable: React.FC<BookingTableProps> = ({
                         <button
                           type="button"
                           onClick={() => setPreviewImageUrl(b.returnPhotoUrl || null)}
-                          className="group relative block w-9 h-9 rounded-lg overflow-hidden border border-emerald-300 shadow-xs hover:ring-2 hover:ring-emerald-400 transition-all cursor-pointer"
+                          className="group relative block w-9 h-9 rounded-lg overflow-hidden border border-[#0096C7] shadow-xs hover:ring-2 hover:ring-[#0096C7] transition-all cursor-pointer"
                           title="Bấm để xem ảnh phóng to"
                         >
                           <img
@@ -427,7 +427,7 @@ export const BookingTable: React.FC<BookingTableProps> = ({
                           </div>
                         </button>
                       )}
-                      <span className="text-[10px] text-slate-400">
+                      <span className="text-[10px] text-[#023E8A]/70">
                         {formatDateTimeDisplay(b.returnedAt)}
                       </span>
                     </div>
@@ -439,15 +439,15 @@ export const BookingTable: React.FC<BookingTableProps> = ({
                     <button
                       type="button"
                       onClick={() => onOpenReturnModal(b)}
-                      className="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-xl shadow-xs active:scale-95 flex items-center gap-1.5 text-xs ml-auto cursor-pointer"
+                      className="px-3 py-1.5 bg-[#0077B6] hover:bg-[#023E8A] text-white font-bold rounded-xl shadow-xs active:scale-95 flex items-center gap-1.5 text-xs ml-auto cursor-pointer"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
                       <span>Trả thiết bị</span>
                     </button>
                   ) : b.isReturned ? (
-                    <span className="text-slate-400 text-[11px] italic">Hoàn tất</span>
+                    <span className="text-[#03045E]/50 text-[11px] italic">Hoàn tất</span>
                   ) : (
-                    <span className="text-slate-400 text-[11px] italic">Chờ trả</span>
+                    <span className="text-[#03045E]/50 text-[11px] italic">Chờ trả</span>
                   )}
                 </div>
               </div>

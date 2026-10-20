@@ -1,0 +1,29 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isSuperAdmin() {
+      return isAuthenticated() && 
+        request.auth.token.email == 'y-p@dymvietnam.net' &&
+        request.auth.token.email_verified == true;
+    }
+
+    // Return photos for device return confirmation
+    match /returns/{allPaths=**} {
+      // Authenticated users can view and upload return verification photos
+      allow read, create, update: if isAuthenticated();
+      // Only y-p@dymvietnam.net can delete return photos
+      allow delete: if isSuperAdmin();
+    }
+
+    // Default rule for other files in storage bucket
+    match /{allPaths=**} {
+      allow read, create, update: if isAuthenticated();
+      allow delete: if isSuperAdmin();
+    }
+  }
+}

@@ -1,0 +1,80 @@
+/**
+ * CẤU HÌNH VỊ TRÍ CHỖ NGỒI VĂN PHÒNG DYM VIETNAM
+ * Khóa: Email nhân viên
+ * Giá trị: Nhãn chính xác như trong ô trên sơ đồ văn phòng
+ */
+export const DEFAULT_SEAT_CONFIG: Record<string, string> = {
+  "le-v@dymvietnam.jp": "VINH",
+  "y-p@dymvietnam.net": "Y (2課-S)",
+  "anh-h@dymvietnam.net": "LAN ANH",
+  "thai-l@dymvietnam.net": "TUAN THAI",
+  "hang-ngo@dymvietnam.net": "THUY HANG",
+  "vy-t@dymvietnam.net": "NGOC VY",
+  "ha-n@dymvietnam.net": "THAI HA",
+  "thu-n@dymvietnam.net": "LE THU",
+  "dat-p@dymvietnam.net": "DAT(2課-B)",
+  "phat-h@dymvietnam.net": "THUAN PHAT",
+  "ngoc-ngo@dymvietnam.net": "ANH NGOC",
+  "nghi-n@dymvietnam.net": "KHA NGHI",
+  "nhu-n@dymvietnam.net": "NGOC NHU",
+  "ngan-nguyen@dymvietnam.net": "THU NGAN",
+  "thu-truong@dymvietnam.net": "MINH THU",
+  "minh-h@dymvietnam.net": "NGOC MINH",
+  "ngan-ly@dymvietnam.net": "THANH NGAN",
+  "quang-n@dymvietnam.net": "DINH QUANG",
+  "ha-t@dymvietnam.net": "HA",
+  "vy-n@dymvietnam.net": "VY(2課-A)",
+  "hung-t@dymvietnam.net": "DUC HUNG",
+  "ngan-h@dymvietnam.net": "BAO NGAN",
+  "nhi-l@dymvietnam.net": "MY NHI",
+  "ngoc-t@dymvietnam.net": "NHU NGOC",
+  "phuc-l@dymvietnam.net": "HOANG PHUC",
+  "danh-t@dymvietnam.net": "HUU DANH",
+  "ha-d@dymvietnam.net": "HONG HA",
+  "nhi-huynh@dymvietnam.net": "NGOC NHI",
+  "duyen-d@dymvietnam.net": "QUYNH DUYEN",
+  "truc-n@dymvietnam.net": "TRUC(1課)",
+  "thi-t@dymvietnam.net": "NGUYET THI",
+  "anh-l@dymvietnam.net": "NHAT ANH",
+  "luyen-h@dymvietnam.net": "THI LUYEN",
+  "ngoc-nguyen@dymvietnam.net": "ÁNH NGOC",
+  "an-n@dymvietnam.net": "THUY AN",
+  "oanh-d@dymvietnam.net": "MY OANH",
+  "nhi-n@dymvietnam.net": "TUYET NHI",
+  "han-n@dymvietnam.net": "NGOC HAN",
+  "van-h@dymvietnam.net": "KHANH VAN",
+  "duyen-v@dymvietnam.net": "MY DUYEN",
+  "yen-h@dymvietnam.net": "THU YEN",
+  "my-t@dymvietnam.net": "MY (3課)",
+  "nhi-t@dymvietnam.net": "YEN NHI",
+  "huyen-d@dymvietnam.net": "THANH HUYEN",
+  "phuong-n@dymvietnam.net": "MINH PHUONG",
+  "dinh-tran@dymvietnam.net": "DINH DINH",
+  "hien-v@dymvietnam.net": "HIEN (GS)",
+  "quyen-n@dymvietnam.net": "THUC QUYEN",
+  "thanh-h@dymvietnam.net": "THANH",
+  "han-ng@dymvietnam.net": "MY HAN",
+  "nhi-h@dymvietnam.net": "XUAN NHI",
+  "truc-l@dymvietnam.net": "LAM TRUC",
+  "thao-l@dymvietnam.net": "SONG THAO",
+  "vuong-p@dymvietnam.net": "VUONG",
+  "vy-l@dymvietnam.net": "LAN VY",
+  "duy-nguyen@dymvietnam.net": "ANH DUY",
+  "ngoc-p@dymvietnam.net": "YEN NGOC",
+  "tien-nguyen@dymvietnam.net": "TIEN",
+  "nhi-p@dymvietnam.net": "PHUONG NHI"
+};
+
+/**
+ * Chuẩn hóa nhãn để tìm kiếm và so khớp linh hoạt
+ */
+export function normalizeSeatLabel(label: string): string {
+  if (!label) return '';
+  return label
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, '')
+    .replace(/[（\(]/g, '(')
+    .replace(/[）\)]/g, ')')
+    .normalize('NFC');
+}
