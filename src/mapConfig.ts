@@ -58,25 +58,25 @@ export const OFFICE_CELLS: MapCellConfig[] = [
 
   // ===================== KHU VỰC TRÊN BÊN PHẢI (Rows 0-4) =====================
   // Cụm 1: THANH, MY HAN, XUAN NHI
-  { id: 'seat-thanh', label: 'THANH', col: 30, row: 0, colSpan: 2, rowSpan: 1, bgColor: '#DCFCE7', textColor: '#14532D', isSeat: true, walkable: false },
-  { id: 'seat-my-han', label: 'MY HAN', col: 30, row: 1, colSpan: 2, rowSpan: 1, bgColor: '#DCFCE7', textColor: '#14532D', isSeat: true, walkable: false },
-  { id: 'seat-xuan-nhi', label: 'XUAN NHI', col: 30, row: 2, colSpan: 2, rowSpan: 1, bgColor: '#DCFCE7', textColor: '#14532D', isSeat: true, walkable: false },
+  { id: 'seat-thanh', label: 'THANH', col: 30, row: 0, colSpan: 2, rowSpan: 1, bgColor: '#DCFCE7', textColor: '#03045E', isSeat: true, walkable: false },
+  { id: 'seat-my-han', label: 'MY HAN', col: 30, row: 1, colSpan: 2, rowSpan: 1, bgColor: '#DCFCE7', textColor: '#03045E', isSeat: true, walkable: false },
+  { id: 'seat-xuan-nhi', label: 'XUAN NHI', col: 30, row: 2, colSpan: 2, rowSpan: 1, bgColor: '#DCFCE7', textColor: '#03045E', isSeat: true, walkable: false },
   { id: 'top-green-1-3', label: '', col: 30, row: 3, colSpan: 2, rowSpan: 1, bgColor: '#DCFCE7', walkable: false },
   { id: 'top-green-1-4', label: '', col: 30, row: 4, colSpan: 2, rowSpan: 1, bgColor: '#DCFCE7', walkable: false },
 
   // Cụm 2: 菅野, LAM TRUC, VUONG, SONG THAO, LAN VY
-  { id: 'top-sugano', label: '菅野', col: 33, row: 0, colSpan: 2, rowSpan: 1, bgColor: '#DCFCE7', textColor: '#14532D', isHeader: true, walkable: false },
-  { id: 'seat-lam-truc', label: 'LAM TRUC', col: 33, row: 1, bgColor: '#DCFCE7', textColor: '#14532D', isSeat: true, walkable: false },
-  { id: 'seat-vuong', label: 'VUONG', col: 34, row: 1, bgColor: '#DCFCE7', textColor: '#14532D', isSeat: true, walkable: false },
-  { id: 'seat-song-thao', label: 'SONG THAO', col: 33, row: 2, bgColor: '#DCFCE7', textColor: '#14532D', isSeat: true, walkable: false },
-  { id: 'seat-lan-vy', label: 'LAN VY', col: 34, row: 2, bgColor: '#DCFCE7', textColor: '#14532D', isSeat: true, walkable: false },
+  { id: 'top-sugano', label: '菅野', col: 33, row: 0, colSpan: 2, rowSpan: 1, bgColor: '#DCFCE7', textColor: '#03045E', isHeader: true, walkable: false },
+  { id: 'seat-lam-truc', label: 'LAM TRUC', col: 33, row: 1, bgColor: '#DCFCE7', textColor: '#03045E', isSeat: true, walkable: false },
+  { id: 'seat-vuong', label: 'VUONG', col: 34, row: 1, bgColor: '#DCFCE7', textColor: '#03045E', isSeat: true, walkable: false },
+  { id: 'seat-song-thao', label: 'SONG THAO', col: 33, row: 2, bgColor: '#DCFCE7', textColor: '#03045E', isSeat: true, walkable: false },
+  { id: 'seat-lan-vy', label: 'LAN VY', col: 34, row: 2, bgColor: '#DCFCE7', textColor: '#03045E', isSeat: true, walkable: false },
   { id: 'top-green-2-3', label: '', col: 33, row: 3, colSpan: 2, rowSpan: 1, bgColor: '#DCFCE7', walkable: false },
   { id: 'top-green-2-4', label: '', col: 33, row: 4, colSpan: 2, rowSpan: 1, bgColor: '#DCFCE7', walkable: false },
 
   // Cụm 3: YEN NGOC, TIEN
-  { id: 'seat-yen-ngoc', label: 'YEN NGOC', col: 37, row: 1, colSpan: 2, rowSpan: 1, bgColor: '#DCFCE7', textColor: '#14532D', isSeat: true, walkable: false },
+  { id: 'seat-yen-ngoc', label: 'YEN NGOC', col: 37, row: 1, colSpan: 2, rowSpan: 1, bgColor: '#DCFCE7', textColor: '#03045E', isSeat: true, walkable: false },
   { id: 'top-green-3-2', label: '', col: 37, row: 2, colSpan: 2, rowSpan: 1, bgColor: '#DCFCE7', walkable: false },
-  { id: 'seat-tien', label: 'TIEN', col: 37, row: 3, colSpan: 2, rowSpan: 1, bgColor: '#DCFCE7', textColor: '#14532D', isSeat: true, walkable: false },
+  { id: 'seat-tien', label: 'TIEN', col: 37, row: 3, colSpan: 2, rowSpan: 1, bgColor: '#DCFCE7', textColor: '#03045E', isSeat: true, walkable: false },
   { id: 'top-green-3-4', label: '', col: 37, row: 4, colSpan: 2, rowSpan: 1, bgColor: '#DCFCE7', walkable: false },
 
   // ===================== HÀNG GIỮA (Middle Row - Rows 7-12) =====================
@@ -144,7 +144,7 @@ export const OFFICE_CELLS: MapCellConfig[] = [
   { id: 'seat-thanh-huyen', label: 'THANH HUYEN', col: 11, row: 10, bgColor: '#D2E3EA', isSeat: true, walkable: false },
   { id: 'seat-thuc-quyen', label: 'THUC QUYEN', col: 12, row: 10, bgColor: '#D2E3EA', isSeat: true, walkable: false },
   { id: 'seat-minh-phuong', label: 'MINH PHUONG', col: 11, row: 11, bgColor: '#D2E3EA', isSeat: true, walkable: false },
-  { id: 'seat-dinh-ha', label: 'DINH HA', col: 12, row: 11, bgColor: '#D2E3EA', textColor: '#DB2777', isSeat: true, walkable: false },
+  { id: 'seat-dinh-ha', label: 'DINH HA', col: 12, row: 11, bgColor: '#D2E3EA', textColor: '#03045E', isSeat: true, walkable: false },
 
   // --- CỘT Ô HỒNG (Col 14, Rows 8-12) ---
   { id: 'pink-col-8', label: '', col: 14, row: 8, bgColor: '#FCE7F3', borderColor: '#F472B6', walkable: false },
@@ -181,14 +181,14 @@ export const OFFICE_CELLS: MapCellConfig[] = [
 
   // --- CỤM BÀN XANH LÁ GIỮA (Cols 33-34) ---
   { id: 'mid-green-empty-1', label: '', col: 33, row: 7, colSpan: 2, rowSpan: 3, bgColor: '#DCFCE7', borderColor: '#86EFAC', walkable: false },
-  { id: 'seat-anh-duy', label: 'ANH DUY', col: 33, row: 10, bgColor: '#DCFCE7', textColor: '#14532D', isSeat: true, walkable: false },
+  { id: 'seat-anh-duy', label: 'ANH DUY', col: 33, row: 10, bgColor: '#DCFCE7', textColor: '#03045E', isSeat: true, walkable: false },
   { id: 'mid-green-empty-2', label: '', col: 34, row: 10, bgColor: '#DCFCE7', walkable: false },
   { id: 'mid-green-empty-3', label: '', col: 33, row: 11, colSpan: 2, rowSpan: 1, bgColor: '#DCFCE7', walkable: false },
 
   // --- CỤM BÀN XANH LÁ GÓC PHẢI (Cols 37-38) ---
   { id: 'right-green-empty-1', label: '', col: 37, row: 7, colSpan: 2, rowSpan: 1, bgColor: '#DCFCE7', borderColor: '#86EFAC', walkable: false },
   { id: 'right-green-empty-2', label: '', col: 37, row: 8, bgColor: '#DCFCE7', walkable: false },
-  { id: 'seat-phuong-nhi', label: 'PHUONG NHI', col: 38, row: 8, bgColor: '#86EFAC', textColor: '#064E3B', isSeat: true, walkable: false },
+  { id: 'seat-phuong-nhi', label: 'PHUONG NHI', col: 38, row: 8, bgColor: '#86EFAC', textColor: '#03045E', isSeat: true, walkable: false },
   { id: 'right-green-empty-3', label: '', col: 37, row: 9, colSpan: 2, rowSpan: 3, bgColor: '#DCFCE7', borderColor: '#86EFAC', walkable: false },
 
   // ===================== HÀNG DƯỚI (Rows 14-21) =====================

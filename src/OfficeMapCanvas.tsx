@@ -54,16 +54,17 @@ export function formatSeatContent(label: string): FormattedSeat {
   }
 
   // Japanese or department in parentheses: "DAT(2課-B)", "TRUC(1課)", "Y (2課-S)", "VY(2課-A)", "MY (3課)", "HIEN (GS)"
-  const parenMatch = label.match(/^([^(]+?)\s*(\([^)]+\))$/);
+  // Hỗ trợ cả ngoặc đơn chuẩn () và ngoặc toàn giác Nhật （）
+  const parenMatch = label.match(/^([^(（]+?)\s*([(\（][^)\）]+[)\）])$/);
   if (parenMatch) {
     const namePart = parenMatch[1].trim();
-    const parenPart = parenMatch[2].trim();
+    const parenPart = parenMatch[2].trim().replace('（', '(').replace('）', ')');
     return {
       type: 'paren',
       line1: namePart,
       line2: parenPart,
       mainFontSize: namePart.length > 7 ? '9.5px' : '10.5px',
-      subFontSize: parenPart.length > 8 ? '8px' : '9px',
+      subFontSize: parenPart.length > 8 ? '8.5px' : '9.5px',
     };
   }
 
@@ -605,6 +606,9 @@ export const OfficeMapCanvas: React.FC<OfficeMapCanvasProps> = ({
                 bg = '#FEF2F2';
                 textCol = '#DC2626';
                 borderStyle = '2.5px solid #DC2626';
+              } else if (cell.isSeat) {
+                // Đảm bảo tất cả các ô chỗ ngồi trên nền sáng dùng màu xanh đậm #03045E có độ tương phản cao nhất
+                textCol = '#03045E';
               }
 
               const parsed = formatSeatContent(cell.label);
@@ -682,32 +686,39 @@ export const OfficeMapCanvas: React.FC<OfficeMapCanvasProps> = ({
                         wordBreak: 'normal',
                         overflowWrap: 'normal',
                         hyphens: 'none',
-                        lineHeight: '1.2',
+                        lineHeight: '1.18',
                       }}
                     >
                       {parsed.line2 ? (
                         <>
+                          {/* Dòng họ/tên chính: In đậm 700 (font-bold), màu xanh đậm #03045E (hoặc trắng #FFFFFF nếu Bạn ở đây) */}
                           <span
-                            className="font-bold tracking-tight block"
+                            className="font-bold tracking-tight block text-center leading-tight max-w-full px-0.5"
                             style={{
                               fontSize: parsed.mainFontSize || '10.5px',
-                              color: textCol,
-                              wordBreak: 'normal',
+                              fontWeight: 700,
+                              color: isMatch ? '#FFFFFF' : '#03045E',
+                              wordBreak: 'keep-all',
                               overflowWrap: 'normal',
                               hyphens: 'none',
+                              whiteSpace: 'nowrap',
                             }}
                           >
                             {parsed.line1}
                           </span>
+                          {/* Dòng tên phụ: In đậm 700 cùng mức (hoặc 600 nếu là team trong ngoặc), cùng màu xanh đậm #03045E (hoặc trắng #FFFFFF nếu Bạn ở đây) */}
                           <span
-                            className={`font-semibold block ${
-                              isMatch ? 'text-[#CAF0F8]' : 'text-slate-600'
-                            }`}
+                            className={`${
+                              parsed.type === 'paren' ? 'font-semibold' : 'font-bold'
+                            } block text-center tracking-tight leading-tight max-w-full px-0.5`}
                             style={{
-                              fontSize: parsed.subFontSize || '9px',
-                              wordBreak: 'normal',
+                              fontSize: parsed.subFontSize || '9.5px',
+                              fontWeight: parsed.type === 'paren' ? 600 : 700,
+                              color: isMatch ? '#FFFFFF' : '#03045E',
+                              wordBreak: 'keep-all',
                               overflowWrap: 'normal',
                               hyphens: 'none',
+                              whiteSpace: 'nowrap',
                             }}
                           >
                             {parsed.line2}
@@ -715,13 +726,15 @@ export const OfficeMapCanvas: React.FC<OfficeMapCanvasProps> = ({
                         </>
                       ) : (
                         <span
-                          className="font-bold tracking-tight block"
+                          className="font-bold tracking-tight block text-center leading-tight max-w-full px-0.5"
                           style={{
                             fontSize: parsed.mainFontSize || '10.5px',
-                            color: textCol,
-                            wordBreak: 'normal',
+                            fontWeight: 700,
+                            color: isMatch ? '#FFFFFF' : '#03045E',
+                            wordBreak: 'keep-all',
                             overflowWrap: 'normal',
                             hyphens: 'none',
+                            whiteSpace: 'nowrap',
                           }}
                         >
                           {parsed.line1}

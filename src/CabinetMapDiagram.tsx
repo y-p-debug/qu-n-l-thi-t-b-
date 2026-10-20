@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { DEFAULT_SEAT_CONFIG, normalizeSeatLabel } from './seatConfig';
+import { formatSeatContent } from './OfficeMapCanvas';
 import { MapPin, Navigation, Sparkles } from 'lucide-react';
 
 interface CabinetMapDiagramProps {
@@ -189,17 +190,56 @@ export const CabinetMapDiagram: React.FC<CabinetMapDiagramProps> = ({
                   }
 
                   const isMatch = userSeatNorm === normalizeSeatLabel(cell.label);
+                  const parsed = formatSeatContent(cell.label);
                   return (
                     <div
                       key={`vinh-cell-${rIdx}-${cIdx}`}
                       ref={isMatch ? activeSeatRef : undefined}
                       className={`relative p-2 sm:p-2.5 rounded-xl border text-center transition-all flex flex-col items-center justify-center min-h-[46px] sm:min-h-[52px] ${
                         isMatch
-                          ? 'bg-[#023E8A] text-white border-[#0096C7] font-extrabold shadow-md ring-2 ring-[#00B4D8] scale-[1.02] z-10'
-                          : 'bg-[#CAF0F8]/50 hover:bg-[#CAF0F8] border-[#90E0EF] text-[#03045E] font-bold shadow-2xs'
+                          ? 'bg-[#023E8A] text-white border-[#0096C7] shadow-md ring-2 ring-[#00B4D8] scale-[1.02] z-10'
+                          : 'bg-[#CAF0F8]/50 hover:bg-[#CAF0F8] border-[#90E0EF] shadow-2xs'
                       }`}
                     >
-                      <span className="leading-tight break-words">{cell.label}</span>
+                      {cell.isEmpty ? (
+                        <span className="text-[11px] font-medium text-slate-400 italic">{cell.label}</span>
+                      ) : parsed.line2 ? (
+                        <>
+                          <span
+                            className="font-bold tracking-tight block text-center leading-tight max-w-full"
+                            style={{
+                              fontSize: parsed.mainFontSize || '11px',
+                              fontWeight: 700,
+                              color: isMatch ? '#FFFFFF' : '#03045E',
+                            }}
+                          >
+                            {parsed.line1}
+                          </span>
+                          <span
+                            className={`${
+                              parsed.type === 'paren' ? 'font-semibold' : 'font-bold'
+                            } block text-center tracking-tight leading-tight max-w-full`}
+                            style={{
+                              fontSize: parsed.subFontSize || '10px',
+                              fontWeight: parsed.type === 'paren' ? 600 : 700,
+                              color: isMatch ? '#FFFFFF' : '#03045E',
+                            }}
+                          >
+                            {parsed.line2}
+                          </span>
+                        </>
+                      ) : (
+                        <span
+                          className="font-bold tracking-tight block text-center leading-tight max-w-full"
+                          style={{
+                            fontSize: parsed.mainFontSize || '11px',
+                            fontWeight: 700,
+                            color: isMatch ? '#FFFFFF' : '#03045E',
+                          }}
+                        >
+                          {parsed.line1}
+                        </span>
+                      )}
                       {isMatch && (
                         <span className="mt-0.5 inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-[#CAF0F8] text-[#03045E] shadow-xs">
                           <MapPin className="w-2.5 h-2.5 text-[#0096C7]" />
@@ -263,17 +303,56 @@ export const CabinetMapDiagram: React.FC<CabinetMapDiagramProps> = ({
               <div key={`ha-r-${rIdx}`} className="grid grid-cols-2 gap-1.5 sm:gap-2">
                 {row.map((cell, cIdx) => {
                   const isMatch = userSeatNorm === normalizeSeatLabel(cell.label);
+                  const parsed = formatSeatContent(cell.label);
                   return (
                     <div
                       key={`ha-cell-${rIdx}-${cIdx}`}
                       ref={isMatch ? activeSeatRef : undefined}
                       className={`relative p-2 sm:p-2.5 rounded-xl border text-center transition-all flex flex-col items-center justify-center min-h-[46px] sm:min-h-[52px] ${
                         isMatch
-                          ? 'bg-[#023E8A] text-white border-[#0096C7] font-extrabold shadow-md ring-2 ring-[#00B4D8] scale-[1.02] z-10'
-                          : 'bg-[#CAF0F8]/50 hover:bg-[#CAF0F8] border-[#90E0EF] text-[#03045E] font-bold shadow-2xs'
+                          ? 'bg-[#023E8A] text-white border-[#0096C7] shadow-md ring-2 ring-[#00B4D8] scale-[1.02] z-10'
+                          : 'bg-[#CAF0F8]/50 hover:bg-[#CAF0F8] border-[#90E0EF] shadow-2xs'
                       }`}
                     >
-                      <span className="leading-tight break-words">{cell.label}</span>
+                      {cell.isEmpty ? (
+                        <span className="text-[11px] font-medium text-slate-400 italic">{cell.label}</span>
+                      ) : parsed.line2 ? (
+                        <>
+                          <span
+                            className="font-bold tracking-tight block text-center leading-tight max-w-full"
+                            style={{
+                              fontSize: parsed.mainFontSize || '11px',
+                              fontWeight: 700,
+                              color: isMatch ? '#FFFFFF' : '#03045E',
+                            }}
+                          >
+                            {parsed.line1}
+                          </span>
+                          <span
+                            className={`${
+                              parsed.type === 'paren' ? 'font-semibold' : 'font-bold'
+                            } block text-center tracking-tight leading-tight max-w-full`}
+                            style={{
+                              fontSize: parsed.subFontSize || '10px',
+                              fontWeight: parsed.type === 'paren' ? 600 : 700,
+                              color: isMatch ? '#FFFFFF' : '#03045E',
+                            }}
+                          >
+                            {parsed.line2}
+                          </span>
+                        </>
+                      ) : (
+                        <span
+                          className="font-bold tracking-tight block text-center leading-tight max-w-full"
+                          style={{
+                            fontSize: parsed.mainFontSize || '11px',
+                            fontWeight: 700,
+                            color: isMatch ? '#FFFFFF' : '#03045E',
+                          }}
+                        >
+                          {parsed.line1}
+                        </span>
+                      )}
                       {isMatch && (
                         <span className="mt-0.5 inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-[#CAF0F8] text-[#03045E] shadow-xs">
                           <MapPin className="w-2.5 h-2.5 text-[#0096C7]" />
