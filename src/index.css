@@ -18,9 +18,25 @@
 @layer base {
   html, body {
     width: 100%;
+    max-width: 100%;
     margin: 0;
     padding: 0;
     overflow-x: hidden;
     -webkit-text-size-adjust: 100%;
+    box-sizing: border-box;
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  /* Chống tràn cho input ngày/giờ trên iOS Safari và mobile */
+  input[type="date"],
+  input[type="time"] {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    -webkit-appearance: none;
+    appearance: none;
   }
 }

@@ -324,26 +324,28 @@ export const BookingForm: React.FC<BookingFormProps> = ({
   };
 
   return (
-    <div className="w-full bg-white rounded-2xl shadow-sm border border-[#ADE8F4] overflow-hidden">
+    <div className="w-full max-w-full bg-white rounded-2xl shadow-sm border border-[#ADE8F4] overflow-hidden">
       {/* Header: gradient ngang từ --b2 sang --b3, chữ trắng đậm */}
-      <div className="bg-gradient-to-r from-[#023E8A] to-[#0077B6] px-5 py-3.5 text-white flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-[#ADE8F4]" />
-          <span className="text-sm font-bold tracking-tight text-white">Đăng ký mượn thiết bị • 機器貸出登録</span>
+      <div className="bg-gradient-to-r from-[#023E8A] to-[#0077B6] px-4 sm:px-5 py-3.5 text-white flex items-center justify-between">
+        <div className="flex items-center gap-2 min-w-0">
+          <Sparkles className="w-4 h-4 text-[#ADE8F4] shrink-0" />
+          <span className="text-xs sm:text-sm font-bold tracking-tight text-white truncate">
+            Đăng ký mượn thiết bị • 機器貸出登録
+          </span>
         </div>
-        <p className="text-xs text-[#CAF0F8] hidden sm:block font-medium">
+        <p className="text-xs text-[#CAF0F8] hidden sm:block font-medium shrink-0">
           DYM Vietnam Co., Ltd.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
+      <form onSubmit={handleSubmit} className="p-3.5 sm:p-6 space-y-4 w-full max-w-full overflow-x-hidden box-border">
         {/* Form Fields Responsive Grid: 1 col mobile, 2 cols sm, 3 cols md, 4 cols xl */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3.5 sm:gap-4 w-full max-w-full">
           {/* 日付 Ngày */}
-          <div>
+          <div className="w-full max-w-full min-w-0">
             <label className="block text-xs font-bold text-[#03045E] mb-1.5 uppercase tracking-wider flex items-center gap-1.5 min-h-[22px]">
-              <Calendar className="w-3.5 h-3.5 text-[#0096C7]" />
-              <span>日付 Ngày (Date) <span className="text-rose-500">*</span></span>
+              <Calendar className="w-3.5 h-3.5 text-[#0096C7] shrink-0" />
+              <span className="truncate">日付 Ngày (Date) <span className="text-rose-500">*</span></span>
             </label>
             <input
               type="date"
@@ -351,48 +353,48 @@ export const BookingForm: React.FC<BookingFormProps> = ({
               value={date}
               onChange={(e) => setDate(e.target.value)}
               required
-              className="w-full px-3.5 py-2.5 bg-white border border-[#90E0EF] rounded-xl text-sm font-medium text-[#03045E] focus:outline-none focus:ring-2 focus:ring-[#ADE8F4] focus:border-[#0096C7] transition-all shadow-xs"
+              className="w-full max-w-full min-w-0 box-border px-3.5 py-2.5 bg-white border border-[#90E0EF] rounded-xl text-sm font-medium text-[#03045E] focus:outline-none focus:ring-2 focus:ring-[#ADE8F4] focus:border-[#0096C7] transition-all shadow-xs [appearance:none] [-webkit-appearance:none]"
             />
           </div>
 
           {/* 開始時刻 Thời gian bắt đầu */}
-          <div>
+          <div className="w-full max-w-full min-w-0">
             <label className="block text-xs font-bold text-[#03045E] mb-1.5 uppercase tracking-wider flex items-center gap-1.5 min-h-[22px]">
-              <Clock className="w-3.5 h-3.5 text-[#0096C7]" />
-              <span>開始時刻 Bắt đầu <span className="text-rose-500">*</span></span>
+              <Clock className="w-3.5 h-3.5 text-[#0096C7] shrink-0" />
+              <span className="truncate">開始時刻 Bắt đầu <span className="text-rose-500">*</span></span>
             </label>
             <input
               type="time"
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}
               required
-              className="w-full px-3.5 py-2.5 bg-white border border-[#90E0EF] rounded-xl text-sm font-medium text-[#03045E] focus:outline-none focus:ring-2 focus:ring-[#ADE8F4] focus:border-[#0096C7] transition-all shadow-xs"
+              className="w-full max-w-full min-w-0 box-border px-3.5 py-2.5 bg-white border border-[#90E0EF] rounded-xl text-sm font-medium text-[#03045E] focus:outline-none focus:ring-2 focus:ring-[#ADE8F4] focus:border-[#0096C7] transition-all shadow-xs [appearance:none] [-webkit-appearance:none]"
             />
           </div>
 
           {/* 終了時刻 Thời gian kết thúc */}
-          <div>
+          <div className="w-full max-w-full min-w-0">
             <label className="block text-xs font-bold text-[#03045E] mb-1.5 uppercase tracking-wider flex items-center gap-1.5 min-h-[22px]">
-              <Clock className="w-3.5 h-3.5 text-[#0096C7]" />
-              <span>終了時刻 Kết thúc <span className="text-rose-500">*</span></span>
+              <Clock className="w-3.5 h-3.5 text-[#0096C7] shrink-0" />
+              <span className="truncate">終了時刻 Kết thúc <span className="text-rose-500">*</span></span>
             </label>
             <input
               type="time"
               value={endTime}
               onChange={(e) => setEndTime(e.target.value)}
               required
-              className="w-full px-3.5 py-2.5 bg-white border border-[#90E0EF] rounded-xl text-sm font-medium text-[#03045E] focus:outline-none focus:ring-2 focus:ring-[#ADE8F4] focus:border-[#0096C7] transition-all shadow-xs"
+              className="w-full max-w-full min-w-0 box-border px-3.5 py-2.5 bg-white border border-[#90E0EF] rounded-xl text-sm font-medium text-[#03045E] focus:outline-none focus:ring-2 focus:ring-[#ADE8F4] focus:border-[#0096C7] transition-all shadow-xs [appearance:none] [-webkit-appearance:none]"
             />
           </div>
 
           {/* Thiết bị (Select) */}
-          <div>
-            <label className="block text-xs font-bold text-[#03045E] mb-1.5 uppercase tracking-wider flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <Laptop className="w-3.5 h-3.5 text-[#0096C7]" />
+          <div className="w-full max-w-full min-w-0">
+            <label className="block text-xs font-bold text-[#03045E] mb-1.5 uppercase tracking-wider flex items-center justify-between min-h-[22px]">
+              <span className="flex items-center gap-1.5 truncate">
+                <Laptop className="w-3.5 h-3.5 text-[#0096C7] shrink-0" />
                 Thiết bị (機器) <span className="text-rose-500">*</span>
               </span>
-              <span className="text-[10px] text-[#03045E] bg-[#ADE8F4] px-2 py-0.5 rounded-full font-bold border border-[#90E0EF]">
+              <span className="text-[10px] text-[#03045E] bg-[#ADE8F4] px-2 py-0.5 rounded-full font-bold border border-[#90E0EF] shrink-0">
                 {availableDevices.length} SẴN SÀNG
               </span>
             </label>
@@ -400,7 +402,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
               value={device}
               onChange={(e) => setDevice(e.target.value as DeviceType)}
               required
-              className="w-full px-3.5 py-2.5 bg-white border border-[#90E0EF] rounded-xl text-sm font-semibold text-[#03045E] focus:outline-none focus:ring-2 focus:ring-[#ADE8F4] focus:border-[#0096C7] transition-all shadow-xs cursor-pointer"
+              className="w-full max-w-full min-w-0 box-border px-3.5 py-2.5 bg-white border border-[#90E0EF] rounded-xl text-sm font-semibold text-[#03045E] focus:outline-none focus:ring-2 focus:ring-[#ADE8F4] focus:border-[#0096C7] transition-all shadow-xs cursor-pointer"
             >
               <option value="">-- Chọn thiết bị còn trống --</option>
               {DEVICE_LIST.map((d) => {
@@ -421,16 +423,16 @@ export const BookingForm: React.FC<BookingFormProps> = ({
           </div>
 
           {/* チーム Team */}
-          <div>
+          <div className="w-full max-w-full min-w-0">
             <label className="block text-xs font-bold text-[#03045E] mb-1.5 uppercase tracking-wider flex items-center gap-1.5 min-h-[22px]">
-              <Users className="w-3.5 h-3.5 text-[#0096C7]" />
-              <span>チーム Team <span className="text-rose-500">*</span></span>
+              <Users className="w-3.5 h-3.5 text-[#0096C7] shrink-0" />
+              <span className="truncate">チーム Team <span className="text-rose-500">*</span></span>
             </label>
             <select
               value={team}
               onChange={(e) => handleTeamChange(e.target.value as TeamType)}
               required
-              className="w-full px-3.5 py-2.5 bg-white border border-[#90E0EF] rounded-xl text-sm font-semibold text-[#03045E] focus:outline-none focus:ring-2 focus:ring-[#ADE8F4] focus:border-[#0096C7] transition-all shadow-xs cursor-pointer"
+              className="w-full max-w-full min-w-0 box-border px-3.5 py-2.5 bg-white border border-[#90E0EF] rounded-xl text-sm font-semibold text-[#03045E] focus:outline-none focus:ring-2 focus:ring-[#ADE8F4] focus:border-[#0096C7] transition-all shadow-xs cursor-pointer"
             >
               {TEAM_LIST.map((t) => (
                 <option key={t} value={t}>
@@ -441,16 +443,16 @@ export const BookingForm: React.FC<BookingFormProps> = ({
           </div>
 
           {/* 登録者名 Người đăng ký (Có ô tìm kiếm đánh chữ + liên kết 2 chiều với Team) */}
-          <div className="relative" ref={dropdownRef}>
+          <div className="relative w-full max-w-full min-w-0" ref={dropdownRef}>
             <label className="block text-xs font-bold text-[#03045E] mb-1.5 uppercase tracking-wider flex items-center gap-1.5 min-h-[22px]">
-              <UserCheck className="w-3.5 h-3.5 text-[#0096C7]" />
-              <span>登録者名 Người đăng ký <span className="text-rose-500">*</span></span>
+              <UserCheck className="w-3.5 h-3.5 text-[#0096C7] shrink-0" />
+              <span className="truncate">登録者名 Người đăng ký <span className="text-rose-500">*</span></span>
             </label>
 
             {/* Custom Searchable Dropdown Trigger */}
             <div
               onClick={() => setIsRegistrantDropdownOpen(!isRegistrantDropdownOpen)}
-              className="w-full px-3.5 py-2.5 bg-white border border-[#90E0EF] hover:border-[#0096C7] rounded-xl text-sm font-semibold text-[#03045E] flex items-center justify-between cursor-pointer transition-all shadow-xs"
+              className="w-full max-w-full min-w-0 box-border px-3.5 py-2.5 bg-white border border-[#90E0EF] hover:border-[#0096C7] rounded-xl text-sm font-semibold text-[#03045E] flex items-center justify-between cursor-pointer transition-all shadow-xs"
             >
               <span className="truncate">
                 {registrantName || '-- Chọn hoặc tìm người đăng ký --'}
@@ -460,7 +462,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
 
             {/* Dropdown Menu Popup - ENLARGED */}
             {isRegistrantDropdownOpen && (
-              <div className="absolute right-0 left-0 sm:-left-24 sm:right-0 sm:w-[480px] top-full mt-2 z-50 bg-white rounded-2xl shadow-2xl border border-[#90E0EF] overflow-hidden animate-in fade-in zoom-in-95 duration-150 ring-1 ring-black/5">
+              <div className="absolute left-0 right-0 sm:-left-24 sm:right-auto sm:w-[480px] max-w-[calc(100vw-24px)] top-full mt-2 z-50 bg-white rounded-2xl shadow-2xl border border-[#90E0EF] overflow-hidden animate-in fade-in zoom-in-95 duration-150 ring-1 ring-black/5">
                 {/* Search Input Box */}
                 <div className="p-3.5 border-b border-[#90E0EF]/60 bg-[#CAF0F8]/30 flex items-center gap-2.5">
                   <Search className="w-5 h-5 text-[#0096C7] shrink-0 ml-1" />
@@ -590,10 +592,10 @@ export const BookingForm: React.FC<BookingFormProps> = ({
           </div>
 
           {/* 7. 目的 Mục đích (Chiếm 2 cột trên màn hình rộng xl:col-span-2) */}
-          <div className="col-span-1 sm:col-span-2 md:col-span-3 xl:col-span-2">
+          <div className="col-span-1 sm:col-span-2 md:col-span-3 xl:col-span-2 w-full max-w-full min-w-0">
             <label className="block text-xs font-bold text-[#03045E] mb-1.5 uppercase tracking-wider flex items-center gap-1.5 min-h-[22px]">
-              <FileText className="w-3.5 h-3.5 text-[#0096C7]" />
-              <span>目的 Mục đích sử dụng <span className="text-rose-500">*</span></span>
+              <FileText className="w-3.5 h-3.5 text-[#0096C7] shrink-0" />
+              <span className="truncate">目的 Mục đích sử dụng <span className="text-rose-500">*</span></span>
             </label>
             <input
               type="text"
@@ -601,7 +603,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
               value={purpose}
               onChange={(e) => setPurpose(e.target.value)}
               required
-              className="w-full px-4 py-2.5 bg-white border border-[#90E0EF] rounded-xl text-sm text-[#03045E] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#ADE8F4] focus:border-[#0096C7] transition-all shadow-xs"
+              className="w-full max-w-full min-w-0 box-border px-3.5 py-2.5 bg-white border border-[#90E0EF] rounded-xl text-sm text-[#03045E] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#ADE8F4] focus:border-[#0096C7] transition-all shadow-xs"
             />
           </div>
         </div>
