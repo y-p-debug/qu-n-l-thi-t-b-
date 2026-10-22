@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   Calendar, 
   Clock, 
@@ -80,7 +81,19 @@ export const BookingForm: React.FC<BookingFormProps> = ({
   // Searchable registrant dropdown state
   const [isRegistrantDropdownOpen, setIsRegistrantDropdownOpen] = useState(false);
   const [registrantSearchText, setRegistrantSearchText] = useState('');
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  interface DropdownPosition {
+    top?: number;
+    bottom?: number;
+    left: number;
+    width: number;
+    maxHeight: number;
+    placement: 'top' | 'bottom';
+  }
+  const [dropdownPos, setDropdownPos] = useState<DropdownPosition | null>(null);
 
   const [laptopPassword, setLaptopPassword] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -102,16 +115,94 @@ export const BookingForm: React.FC<BookingFormProps> = ({
     }
   }, [currentUserName, currentUserEmail]);
 
-  // Close registrant dropdown on click outside
+  const updateDropdownPosition = useCallback(() => {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+
+    // 2) Kích thước:
+    // Panel rộng bằng ô chọn (tối thiểu 280px), không vượt quá chiều rộng màn hình
+    const minWidth = 280;
+    const targetWidth = Math.max(rect.width, minWidth);
+    const maxAvailableWidth = window.innerWidth - 16;
+    const finalWidth = Math.min(targetWidth, maxAvailableWidth);
+
+    // Căn lề trái, đảm bảo nằm trọn trong viewport
+    let left = rect.left;
+    if (left + finalWidth > window.innerWidth - 8) {
+      left = window.innerWidth - finalWidth - 8;
+    }
+    left = Math.max(8, left);
+
+    // 3) Tự động mở lên hoặc xuống:
+    // Nếu phía dưới ô chọn không đủ chỗ (dưới 300px) thì mở panel hướng LÊN trên, ngược lại mở xuống dưới
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    const openUpward = spaceBelow < 300 && spaceAbove > spaceBelow;
+
+    if (openUpward) {
+      const availableHeight = Math.max(160, Math.min(spaceAbove - 12, 420));
+      setDropdownPos({
+        bottom: window.innerHeight - rect.top + 6,
+        left,
+        width: finalWidth,
+        maxHeight: availableHeight,
+        placement: 'top'
+      });
+    } else {
+      const availableHeight = Math.max(160, Math.min(spaceBelow - 12, 420));
+      setDropdownPos({
+        top: rect.bottom + 6,
+        left,
+        width: finalWidth,
+        maxHeight: availableHeight,
+        placement: 'bottom'
+      });
+    }
+  }, []);
+
+  // Update position on scroll/resize, handle click outside and Escape key
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+    if (!isRegistrantDropdownOpen) return;
+
+    updateDropdownPosition();
+
+    // Tự động focus vào ô tìm kiếm khi mở panel
+    const timer = setTimeout(() => {
+      searchInputRef.current?.focus();
+    }, 50);
+
+    const handleScrollOrResize = () => {
+      updateDropdownPosition();
+    };
+
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node;
+      if (triggerRef.current && triggerRef.current.contains(target)) return;
+      if (panelRef.current && panelRef.current.contains(target)) return;
+      setIsRegistrantDropdownOpen(false);
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
         setIsRegistrantDropdownOpen(false);
       }
     };
+
+    window.addEventListener('scroll', handleScrollOrResize, true);
+    window.addEventListener('resize', handleScrollOrResize);
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    document.addEventListener('touchstart', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('scroll', handleScrollOrResize, true);
+      window.removeEventListener('resize', handleScrollOrResize);
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isRegistrantDropdownOpen, updateDropdownPosition]);
 
   // Fetch laptop password if LAPTOP is selected
   useEffect(() => {
@@ -324,9 +415,9 @@ export const BookingForm: React.FC<BookingFormProps> = ({
   };
 
   return (
-    <div className="w-full max-w-full bg-white rounded-2xl shadow-sm border border-[#ADE8F4] overflow-hidden">
+    <div className="w-full max-w-full bg-white rounded-2xl shadow-sm border border-[#ADE8F4]">
       {/* Header: gradient ngang từ --b2 sang --b3, chữ trắng đậm */}
-      <div className="bg-gradient-to-r from-[#023E8A] to-[#0077B6] px-4 sm:px-5 py-3.5 text-white flex items-center justify-between">
+      <div className="bg-gradient-to-r from-[#023E8A] to-[#0077B6] px-4 sm:px-5 py-3.5 text-white flex items-center justify-between rounded-t-2xl">
         <div className="flex items-center gap-2 min-w-0">
           <Sparkles className="w-4 h-4 text-[#ADE8F4] shrink-0" />
           <span className="text-xs sm:text-sm font-bold tracking-tight text-white truncate">
@@ -338,7 +429,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="p-3.5 sm:p-6 space-y-4 w-full max-w-full overflow-x-hidden box-border">
+      <form onSubmit={handleSubmit} className="p-3.5 sm:p-6 space-y-4 w-full max-w-full box-border">
         {/* Form Fields Responsive Grid: 1 col mobile, 2 cols sm, 3 cols md, 4 cols xl */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3.5 sm:gap-4 w-full max-w-full">
           {/* 日付 Ngày */}
@@ -443,7 +534,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
           </div>
 
           {/* 登録者名 Người đăng ký (Có ô tìm kiếm đánh chữ + liên kết 2 chiều với Team) */}
-          <div className="relative w-full max-w-full min-w-0" ref={dropdownRef}>
+          <div className="w-full max-w-full min-w-0">
             <label className="block text-xs font-bold text-[#03045E] mb-1.5 uppercase tracking-wider flex items-center gap-1.5 min-h-[22px]">
               <UserCheck className="w-3.5 h-3.5 text-[#0096C7] shrink-0" />
               <span className="truncate">登録者名 Người đăng ký <span className="text-rose-500">*</span></span>
@@ -451,7 +542,15 @@ export const BookingForm: React.FC<BookingFormProps> = ({
 
             {/* Custom Searchable Dropdown Trigger */}
             <div
-              onClick={() => setIsRegistrantDropdownOpen(!isRegistrantDropdownOpen)}
+              ref={triggerRef}
+              onClick={() => {
+                if (!isRegistrantDropdownOpen) {
+                  updateDropdownPosition();
+                  setIsRegistrantDropdownOpen(true);
+                } else {
+                  setIsRegistrantDropdownOpen(false);
+                }
+              }}
               className="w-full max-w-full min-w-0 box-border px-3.5 py-2.5 bg-white border border-[#90E0EF] hover:border-[#0096C7] rounded-xl text-sm font-semibold text-[#03045E] flex items-center justify-between cursor-pointer transition-all shadow-xs"
             >
               <span className="truncate">
@@ -460,37 +559,54 @@ export const BookingForm: React.FC<BookingFormProps> = ({
               <ChevronDown className={`w-4 h-4 text-[#0096C7] transition-transform ${isRegistrantDropdownOpen ? 'rotate-180' : ''}`} />
             </div>
 
-            {/* Dropdown Menu Popup - ENLARGED */}
-            {isRegistrantDropdownOpen && (
-              <div className="absolute left-0 right-0 sm:-left-24 sm:right-auto sm:w-[480px] max-w-[calc(100vw-24px)] top-full mt-2 z-50 bg-white rounded-2xl shadow-2xl border border-[#90E0EF] overflow-hidden animate-in fade-in zoom-in-95 duration-150 ring-1 ring-black/5">
-                {/* Search Input Box */}
-                <div className="p-3.5 border-b border-[#90E0EF]/60 bg-[#CAF0F8]/30 flex items-center gap-2.5">
-                  <Search className="w-5 h-5 text-[#0096C7] shrink-0 ml-1" />
+            {/* Dropdown Menu Popup rendered via React Portal directly into document.body */}
+            {isRegistrantDropdownOpen && dropdownPos && createPortal(
+              <div
+                ref={panelRef}
+                style={{
+                  position: 'fixed',
+                  left: `${dropdownPos.left}px`,
+                  ...(dropdownPos.placement === 'top'
+                    ? { bottom: `${dropdownPos.bottom}px` }
+                    : { top: `${dropdownPos.top}px` }),
+                  width: `${dropdownPos.width}px`,
+                  maxHeight: `${dropdownPos.maxHeight}px`,
+                  zIndex: 9999,
+                }}
+                className="bg-white rounded-2xl shadow-2xl border-2 border-[#0096C7] overflow-hidden flex flex-col ring-2 ring-black/10 animate-in fade-in zoom-in-95 duration-100"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Search Input Box (Sticky Top) */}
+                <div className="p-3 border-b border-[#90E0EF]/80 bg-[#CAF0F8]/50 flex items-center gap-2.5 shrink-0 sticky top-0 z-10">
+                  <Search className="w-4 h-4 sm:w-5 sm:h-5 text-[#0096C7] shrink-0 ml-1" />
                   <input
+                    ref={searchInputRef}
                     type="text"
                     placeholder="Gõ tên hoặc email để tìm kiếm nhanh..."
                     value={registrantSearchText}
                     onChange={(e) => setRegistrantSearchText(e.target.value)}
-                    autoFocus
-                    onClick={(e) => e.stopPropagation()}
-                    className="w-full text-sm font-medium text-[#03045E] bg-transparent focus:outline-none placeholder:text-slate-400"
+                    className="w-full text-xs sm:text-sm font-medium text-[#03045E] bg-transparent focus:outline-none placeholder:text-slate-400"
                   />
                   {registrantSearchText && (
                     <button
                       type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setRegistrantSearchText('');
-                      }}
-                      className="p-1.5 text-slate-400 hover:text-[#03045E] rounded-full hover:bg-[#CAF0F8] transition-colors"
+                      onClick={() => setRegistrantSearchText('')}
+                      className="p-1 text-slate-400 hover:text-[#03045E] rounded-full hover:bg-[#CAF0F8] transition-colors"
+                      title="Xóa tìm kiếm"
                     >
                       <X className="w-4 h-4" />
                     </button>
                   )}
                 </div>
 
-                {/* Items List - Expanded Height & Roomier Spacing */}
-                <div className="max-h-[380px] overflow-y-auto divide-y divide-[#CAF0F8] p-2 text-sm">
+                {/* Items List - Scrollable with smooth touch */}
+                <div
+                  className="overflow-y-auto divide-y divide-[#CAF0F8] p-2 text-sm flex-1"
+                  style={{
+                    maxHeight: 'min(60vh, 360px)',
+                    WebkitOverflowScrolling: 'touch',
+                  }}
+                >
                   {/* When searching, show all matched */}
                   {registrantSearchText.trim() ? (
                     filteredMembers.length === 0 ? (
@@ -504,18 +620,20 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                           <div
                             key={u.email}
                             onClick={() => handleSelectMember(u)}
-                            className={`p-3 rounded-xl cursor-pointer flex items-center justify-between transition-colors ${
-                              isSelected ? 'bg-[#CAF0F8] text-[#03045E] font-bold border border-[#0096C7]' : 'hover:bg-[#CAF0F8]/40 text-[#03045E]'
+                            className={`p-2.5 sm:p-3 rounded-xl cursor-pointer flex items-center justify-between transition-colors min-h-[40px] ${
+                              isSelected
+                                ? 'bg-[#CAF0F8] text-[#03045E] font-bold border border-[#0096C7]'
+                                : 'hover:bg-[#CAF0F8]/40 text-[#03045E]'
                             }`}
                           >
-                            <div className="space-y-0.5">
+                            <div className="space-y-0.5 min-w-0 pr-2">
                               <div className="flex items-center gap-2">
-                                <span className="text-sm font-semibold text-[#03045E]">{u.name}</span>
-                                <span className="text-xs px-2 py-0.5 rounded-md bg-[#ADE8F4] text-[#03045E] font-bold">
+                                <span className="text-sm font-semibold text-[#03045E] truncate">{u.name}</span>
+                                <span className="text-xs px-2 py-0.5 rounded-md bg-[#ADE8F4] text-[#03045E] font-bold shrink-0">
                                   {u.team}
                                 </span>
                               </div>
-                              <div className="text-xs text-[#03045E]/70 font-normal">{u.email}</div>
+                              <div className="text-xs text-[#03045E]/70 font-normal truncate">{u.email}</div>
                             </div>
                             {isSelected && <Check className="w-5 h-5 text-[#0096C7] shrink-0" />}
                           </div>
@@ -537,13 +655,15 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                           <div
                             key={u.email}
                             onClick={() => handleSelectMember(u)}
-                            className={`p-3 rounded-xl cursor-pointer flex items-center justify-between transition-colors ${
-                              isSelected ? 'bg-[#CAF0F8] text-[#03045E] font-bold border border-[#0096C7]' : 'hover:bg-[#CAF0F8]/40 text-[#03045E]'
+                            className={`p-2.5 sm:p-3 rounded-xl cursor-pointer flex items-center justify-between transition-colors min-h-[40px] ${
+                              isSelected
+                                ? 'bg-[#CAF0F8] text-[#03045E] font-bold border border-[#0096C7]'
+                                : 'hover:bg-[#CAF0F8]/40 text-[#03045E]'
                             }`}
                           >
-                            <div className="space-y-0.5">
-                              <div className="text-sm font-semibold text-[#03045E]">{u.name}</div>
-                              <div className="text-xs text-[#03045E]/70 font-normal">{u.email}</div>
+                            <div className="space-y-0.5 min-w-0 pr-2">
+                              <div className="text-sm font-semibold text-[#03045E] truncate">{u.name}</div>
+                              <div className="text-xs text-[#03045E]/70 font-normal truncate">{u.email}</div>
                             </div>
                             {isSelected && <Check className="w-5 h-5 text-[#0096C7] shrink-0" />}
                           </div>
@@ -565,18 +685,20 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                               <div
                                 key={u.email}
                                 onClick={() => handleSelectMember(u)}
-                                className={`p-3 rounded-xl cursor-pointer flex items-center justify-between transition-colors ${
-                                  isSelected ? 'bg-[#CAF0F8] text-[#03045E] font-bold border border-[#0096C7]' : 'hover:bg-[#CAF0F8]/40 text-[#03045E]'
+                                className={`p-2.5 sm:p-3 rounded-xl cursor-pointer flex items-center justify-between transition-colors min-h-[40px] ${
+                                  isSelected
+                                    ? 'bg-[#CAF0F8] text-[#03045E] font-bold border border-[#0096C7]'
+                                    : 'hover:bg-[#CAF0F8]/40 text-[#03045E]'
                                 }`}
                               >
-                                <div className="space-y-0.5">
+                                <div className="space-y-0.5 min-w-0 pr-2">
                                   <div className="flex items-center gap-2">
-                                    <span className="text-sm font-semibold text-[#03045E]">{u.name}</span>
-                                    <span className="text-xs px-2 py-0.5 rounded-md bg-[#ADE8F4] text-[#03045E] font-semibold">
+                                    <span className="text-sm font-semibold text-[#03045E] truncate">{u.name}</span>
+                                    <span className="text-xs px-2 py-0.5 rounded-md bg-[#ADE8F4] text-[#03045E] font-semibold shrink-0">
                                       {u.team}
                                     </span>
                                   </div>
-                                  <div className="text-xs text-[#03045E]/70 font-normal">{u.email}</div>
+                                  <div className="text-xs text-[#03045E]/70 font-normal truncate">{u.email}</div>
                                 </div>
                                 {isSelected && <Check className="w-5 h-5 text-[#0096C7] shrink-0" />}
                               </div>
@@ -587,7 +709,8 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                     </>
                   )}
                 </div>
-              </div>
+              </div>,
+              document.body
             )}
           </div>
 

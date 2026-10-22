@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   auth, 
   googleProvider, 
@@ -39,6 +39,11 @@ import { DeploymentGuideModal } from './DeploymentGuideModal';
 import { MailQueueViewerModal } from './MailQueueViewerModal';
 import { CabinetMapModal } from './CabinetMapModal';
 import { LoginScreen } from './LoginScreen';
+import {
+  BackgroundEffectsMenu,
+  BackgroundEffectsOverlay,
+  EffectType,
+} from './BackgroundEffects';
 import { 
   Laptop, 
   Camera, 
@@ -139,6 +144,20 @@ export default function App() {
   // Deployment guide modal
   const [showGuideModal, setShowGuideModal] = useState<boolean>(false);
   const [showMailQueueModal, setShowMailQueueModal] = useState<boolean>(false);
+
+  // Hiệu ứng nền động (mặc định luôn luôn là 'none' - Tắt hẳn mỗi khi tải trang / đăng nhập)
+  const [activeEffect, setActiveEffect] = useState<EffectType>('none');
+  const [isEffectsMenuOpen, setIsEffectsMenuOpen] = useState<boolean>(false);
+  const dymLogoRef = useRef<HTMLDivElement>(null);
+
+  // Xóa key localStorage cũ liên quan đến hiệu ứng nếu còn
+  useEffect(() => {
+    try {
+      localStorage.removeItem('dym_bg_effect');
+    } catch {
+      // Bỏ qua lỗi truy cập storage
+    }
+  }, []);
 
   // Listen to Auth State
   useEffect(() => {
@@ -397,11 +416,15 @@ export default function App() {
           {/* Logo & App Title: Ẩn trên màn hình đăng nhập, giữ nguyên sau khi đăng nhập */}
           {!isLoginView ? (
             <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 mr-1">
-              <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-white p-1 flex items-center justify-center shadow-xs shrink-0 overflow-hidden border border-[#48CAE4]/40">
+              <div
+                ref={dymLogoRef}
+                onClick={() => setIsEffectsMenuOpen((prev) => !prev)}
+                className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-white p-1 flex items-center justify-center shadow-xs shrink-0 overflow-hidden border border-[#48CAE4]/40 select-none"
+              >
                 <img
                   src="/assets/bg_logo.jpg"
                   alt="DYM Logo"
-                  className="w-full h-full object-contain rounded-lg"
+                  className="w-full h-full object-contain rounded-lg pointer-events-none"
                 />
               </div>
               <div className="flex items-center gap-2 min-w-0">
@@ -474,6 +497,7 @@ export default function App() {
                     {currentUser.email}
                   </div>
                 </div>
+
                 {currentUser.photoURL ? (
                   <img
                     src={currentUser.photoURL}
@@ -729,6 +753,22 @@ export default function App() {
         device={cabinetModalState.device}
         laptopPassword={cabinetModalState.laptopPassword}
       />
+
+      {/* Menu hiệu ứng nền ẩn kích hoạt khi bấm vào logo DYM ở góc trái header */}
+      {!isLoginView && currentUser && (
+        <BackgroundEffectsMenu
+          isOpen={isEffectsMenuOpen}
+          onClose={() => setIsEffectsMenuOpen(false)}
+          anchorRef={dymLogoRef}
+          activeEffect={activeEffect}
+          onSelectEffect={setActiveEffect}
+        />
+      )}
+
+      {/* Hệ thống hiệu ứng nền động sau khi đăng nhập (mặc định tắt hẳn, chỉ render khi được chọn) */}
+      {!isLoginView && currentUser && activeEffect !== 'none' && (
+        <BackgroundEffectsOverlay activeEffect={activeEffect} />
+      )}
 
       {/* Footer (chân trang trong suốt, chữ --b2 #023E8A) */}
       {!isLoginView && (
