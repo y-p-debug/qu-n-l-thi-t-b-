@@ -1,6 +1,14 @@
 import React, { useState, useRef } from 'react';
 import { Camera, Upload, AlertCircle, CheckCircle2, X, MapPin } from 'lucide-react';
-import { compressImage, uploadReturnPhoto, queueNotificationEmail, db } from './firebase';
+import { 
+  compressImage, 
+  uploadReturnPhoto, 
+  queueNotificationEmail, 
+  db, 
+  storage, 
+  storageRef, 
+  deleteObject 
+} from './firebase';
 import { generateEmailHtml } from './emailTemplates';
 import { doc, updateDoc } from 'firebase/firestore';
 import { BookingRecord, ADMIN_EMAIL } from './types';
@@ -21,10 +29,12 @@ export const ReturnDeviceModal: React.FC<ReturnDeviceModalProps> = ({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [compressedData, setCompressedData] = useState<{ blob: Blob; dataUrl: string } | null>(null);
+  const [uploadedStorageUrl, setUploadedStorageUrl] = useState<string | null>(null);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const createdBlobUrlRef = useRef<string | null>(null);
 
   if (!booking) return null;
 
@@ -38,79 +48,129 @@ export const ReturnDeviceModal: React.FC<ReturnDeviceModalProps> = ({
       return;
     }
 
+    // Thu hồi object URL cũ nếu có
+    if (createdBlobUrlRef.current) {
+      try {
+        URL.revokeObjectURL(createdBlobUrlRef.current);
+      } catch {}
+      createdBlobUrlRef.current = null;
+    }
+
     setErrorMessage(null);
     setSelectedFile(file);
     setIsProcessingImage(true);
 
     try {
-      // Fast compression happens right upon selecting photo
+      // Nén ảnh nhanh ngay khi người dùng chọn
       const result = await compressImage(file, 1280, 0.78);
       setCompressedData(result);
       setPreviewUrl(result.dataUrl);
     } catch (err) {
       console.warn('Pre-compression failed, using object URL for preview:', err);
-      setPreviewUrl(URL.createObjectURL(file));
+      const objUrl = URL.createObjectURL(file);
+      createdBlobUrlRef.current = objUrl;
+      setPreviewUrl(objUrl);
     } finally {
       setIsProcessingImage(false);
     }
   };
 
-  const handleConfirmReturn = async () => {
-    if (!selectedFile) {
-      setErrorMessage('BẮT BUỘC chụp hoặc tải lên hình ảnh thiết bị đã đặt về đúng vị trí cũ trước khi hoàn tất.');
-      return;
+  // Sửa nút xóa ảnh: Hủy object URL, xóa file trên Storage nếu đã upload, reset file input và state
+  const handleRemoveImage = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
     }
 
+    // Nếu ảnh đã được tải lên Firebase Storage trước đó, xóa khỏi Storage
+    if (uploadedStorageUrl) {
+      try {
+        const photoRef = storageRef(storage, uploadedStorageUrl);
+        await deleteObject(photoRef);
+      } catch (err) {
+        console.error('Error deleting photo from Storage:', err);
+      }
+    }
+
+    // Hủy Object URL nếu có
+    if (createdBlobUrlRef.current) {
+      try {
+        URL.revokeObjectURL(createdBlobUrlRef.current);
+      } catch {}
+      createdBlobUrlRef.current = null;
+    }
+
+    // Reset toàn bộ state ảnh
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    setCompressedData(null);
+    setUploadedStorageUrl(null);
+    setIsProcessingImage(false);
+    setErrorMessage(null);
+
+    // Reset giá trị của thẻ input để có thể chọn lại chính file đó
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleConfirmReturn = async () => {
+    // ẢNH KHÔNG CÒN BẮT BUỘC: luôn thực hiện trả thành công dù có ảnh hay không
     setUploading(true);
     setErrorMessage(null);
 
     try {
-      // 1. Ensure compressed data is ready
-      let finalCompressed = compressedData;
-      if (!finalCompressed) {
-        finalCompressed = await compressImage(selectedFile, 1280, 0.78);
-        setCompressedData(finalCompressed);
-      }
+      let downloadUrl: string | null = null;
+      let photoBase64ForEmail: string | undefined = undefined;
 
-      // 2. Upload to Firebase Storage with fast 3.5s timeout fallback
-      const downloadUrl = await uploadReturnPhoto(
-        booking.id, 
-        finalCompressed.blob, 
-        finalCompressed.dataUrl
-      );
+      // Nếu có chọn ảnh thì xử lý tải lên Storage và đính kèm email
+      if (selectedFile) {
+        let finalCompressed = compressedData;
+        if (!finalCompressed) {
+          finalCompressed = await compressImage(selectedFile, 1280, 0.78);
+          setCompressedData(finalCompressed);
+        }
+
+        downloadUrl = await uploadReturnPhoto(
+          booking.id, 
+          finalCompressed.blob, 
+          finalCompressed.dataUrl
+        );
+        photoBase64ForEmail = finalCompressed.dataUrl;
+      }
 
       const returnedAt = new Date().toISOString();
 
-      // 3. Update Firestore Document
+      // Cập nhật Firestore Document (nếu không có ảnh thì lưu null)
       const bookingRef = doc(db, 'bookings', booking.id);
       await updateDoc(bookingRef, {
         isReturned: true,
         returnedAt: returnedAt,
-        returnPhotoUrl: downloadUrl
+        returnPhotoUrl: downloadUrl || null
       });
 
-      // 4. Send Return Notification Email to borrower & admin y-p@dymvietnam.net
+      // Gửi Email thông báo hoàn trả (vẫn gửi bình thường khi không có ảnh)
       const emailContent = generateEmailHtml({
         actionType: 'return',
         booking: {
           ...booking,
           isReturned: true,
           returnedAt: returnedAt,
-          returnPhotoUrl: downloadUrl
+          returnPhotoUrl: downloadUrl || null
         },
-        returnPhotoUrl: downloadUrl,
+        returnPhotoUrl: downloadUrl || null,
         returnedAt: returnedAt
       });
 
       const borrowerEmail = (booking.registrantEmail || '').trim();
-      const recipients = Array.from(new Set([borrowerEmail, 'y-p@dymvietnam.net'].filter(Boolean)));
+      const recipients = Array.from(new Set([borrowerEmail, ADMIN_EMAIL].filter(Boolean)));
 
       await queueNotificationEmail({
         to: recipients,
         subject: emailContent.subject,
         html: emailContent.html,
         type: 'return',
-        photoBase64: finalCompressed.dataUrl // compressed base64 data:image/jpeg;base64,...
+        ...(photoBase64ForEmail ? { photoBase64: photoBase64ForEmail } : {})
       });
 
       confetti({
@@ -144,6 +204,7 @@ export const ReturnDeviceModal: React.FC<ReturnDeviceModalProps> = ({
             </p>
           </div>
           <button
+            type="button"
             onClick={onClose}
             disabled={uploading}
             className="p-1 rounded-lg text-emerald-100 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
@@ -160,7 +221,7 @@ export const ReturnDeviceModal: React.FC<ReturnDeviceModalProps> = ({
               Yêu cầu trả thiết bị (返却条件):
             </div>
             <p className="text-slate-600 leading-relaxed">
-              Theo quy định, bạn <strong className="text-slate-900">bắt buộc</strong> phải chụp ảnh thiết bị đã được cất/đặt đúng vị trí ban đầu để hệ thống lưu bằng chứng hoàn tất.
+              Vui lòng đặt thiết bị về đúng vị trí trong tủ theo sơ đồ hướng dẫn bên dưới. Nên chụp ảnh xác nhận vị trí để tiện đối chiếu khi cần (không bắt buộc).
             </p>
           </div>
 
@@ -193,10 +254,10 @@ export const ReturnDeviceModal: React.FC<ReturnDeviceModalProps> = ({
             </div>
           </div>
 
-          {/* Photo capture section */}
+          {/* Photo capture section - KHÔNG BẮT BUỘC */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-2 uppercase tracking-wide">
-              Chụp ảnh thiết bị tại chỗ • 返却写真 (Bắt buộc)
+              Ảnh xác nhận (không bắt buộc) • 確認写真（任意）
             </label>
 
             <input
@@ -217,14 +278,15 @@ export const ReturnDeviceModal: React.FC<ReturnDeviceModalProps> = ({
                   <Camera className="w-6 h-6" />
                 </div>
                 <div className="text-sm font-semibold text-slate-800 group-hover:text-emerald-700">
-                  Bấm để Chụp ảnh hoặc Chọn ảnh
+                  Bấm để Chụp ảnh hoặc Chọn ảnh (không bắt buộc)
                 </div>
                 <p className="text-xs text-slate-500 max-w-xs">
-                  (Khuyến khích chụp trực tiếp từ camera điện thoại vị trí cất thiết bị)
+                  (Khuyến khích chụp trực tiếp vị trí cất thiết bị để lưu bằng chứng đối chiếu)
                 </p>
                 <button
                   type="button"
-                  className="mt-2 text-xs font-medium text-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg border border-emerald-200 transition-colors"
+                  tabIndex={-1}
+                  className="mt-2 text-xs font-medium text-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg border border-emerald-200 transition-colors pointer-events-none"
                 >
                   <Upload className="w-3.5 h-3.5 inline mr-1" />
                   Mở camera / Tải ảnh lên
@@ -237,37 +299,67 @@ export const ReturnDeviceModal: React.FC<ReturnDeviceModalProps> = ({
                   alt="Ảnh hoàn trả"
                   className="w-full max-h-56 object-contain bg-black/40"
                 />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+
+                {/* Nút hành động nổi trên ảnh khi hover */}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2.5 p-3">
                   <button
                     type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="px-3 py-1.5 bg-white text-slate-900 text-xs font-medium rounded-lg shadow-sm hover:bg-slate-100 flex items-center gap-1.5 cursor-pointer"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      fileInputRef.current?.click();
+                    }}
+                    className="px-3.5 py-2 bg-white text-slate-900 text-xs font-semibold rounded-xl shadow-md hover:bg-slate-100 flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all"
                   >
-                    <Camera className="w-4 h-4" /> Chụp lại ảnh khác
+                    <Camera className="w-4 h-4 text-slate-700" />
+                    <span>Đổi ảnh khác</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    className="px-3.5 py-2 bg-[#C0392B] text-white text-xs font-bold rounded-xl shadow-md hover:bg-[#A93226] flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all"
+                  >
+                    <X className="w-4 h-4" />
+                    <span>Xóa ảnh</span>
                   </button>
                 </div>
-                <div className="p-2 bg-emerald-600 text-white text-xs font-medium flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
+
+                {/* Thanh trạng thái và nút Xóa luôn thấy được dưới ảnh (đặc biệt tiện lợi cho Mobile/Safari) */}
+                <div className="p-2.5 bg-slate-900 text-white text-xs font-medium flex items-center justify-between border-t border-slate-800">
+                  <span className="flex items-center gap-1.5 text-emerald-300">
                     {isProcessingImage ? (
                       <>
                         <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        Đang tối ưu ảnh...
+                        <span>Đang tối ưu ảnh...</span>
                       </>
                     ) : (
-                      <>✓ Đã sẵn sàng hoàn tất</>
+                      <>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Đã đính kèm ảnh</span>
+                      </>
                     )}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedFile(null);
-                      setPreviewUrl(null);
-                      setCompressedData(null);
-                    }}
-                    className="underline text-emerald-100 hover:text-white cursor-pointer"
-                  >
-                    Xóa
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        fileInputRef.current?.click();
+                      }}
+                      className="text-[11px] font-semibold text-slate-300 hover:text-white underline cursor-pointer md:hidden"
+                    >
+                      Đổi ảnh
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      className="px-2.5 py-1 bg-[#C0392B] hover:bg-[#A93226] text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1 cursor-pointer shadow-xs active:scale-95"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                      <span>Xóa ảnh</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -281,31 +373,31 @@ export const ReturnDeviceModal: React.FC<ReturnDeviceModalProps> = ({
           )}
         </div>
 
-        {/* Footer actions */}
+        {/* Footer actions: Nút xác nhận luôn bấm được dù chưa chọn ảnh */}
         <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3">
           <button
             type="button"
             onClick={onClose}
             disabled={uploading}
-            className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-100 transition-colors disabled:opacity-50"
+            className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-100 transition-colors disabled:opacity-50 cursor-pointer"
           >
             Hủy • キャンセル
           </button>
           <button
             type="button"
             onClick={handleConfirmReturn}
-            disabled={uploading || !selectedFile || isProcessingImage}
-            className="px-5 py-2 text-xs font-bold text-white bg-[#0077B6] rounded-xl hover:bg-[#023E8A] shadow-md transition-all disabled:bg-[#90E0EF] disabled:text-[#023E8A] disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
+            disabled={uploading || isProcessingImage}
+            className="px-5 py-2 text-xs font-bold text-white bg-[#0077B6] rounded-xl hover:bg-[#023E8A] shadow-md transition-all disabled:bg-[#90E0EF] disabled:text-[#023E8A] disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer active:scale-98"
           >
             {uploading ? (
               <>
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Đang hoàn tất...
+                <span>Đang hoàn tất...</span>
               </>
             ) : (
               <>
                 <CheckCircle2 className="w-4 h-4" />
-                Xác nhận đã trả • 返却完了
+                <span>Xác nhận đã trả • 返却完了</span>
               </>
             )}
           </button>

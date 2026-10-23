@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { db, updateClientCachedWebhook } from './firebase';
 import { collection, query, orderBy, limit, onSnapshot, doc, getDoc, setDoc } from 'firebase/firestore';
+import { ADMIN_EMAIL } from './types';
 
 interface MailLog {
   id: string;
@@ -42,10 +43,12 @@ export const MailQueueViewerModal: React.FC<{
   const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [configSuccess, setConfigSuccess] = useState<string | null>(null);
 
-  const isAdmin = userEmail === 'y-p@dymvietnam.net';
+  // Kiểm tra quyền Quản trị viên (ADMIN = y-p@dymvietnam.net, không phân biệt hoa thường)
+  const isAdmin = Boolean(userEmail && userEmail.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase());
 
-  // Load current webhook config
+  // Load current webhook config (chỉ tải khi là Admin)
   useEffect(() => {
+    if (!isAdmin) return;
     async function loadConfig() {
       try {
         const snap = await getDoc(doc(db, 'system_settings', 'apps_script'));
@@ -62,10 +65,11 @@ export const MailQueueViewerModal: React.FC<{
       }
     }
     loadConfig();
-  }, []);
+  }, [isAdmin]);
 
-  // Listen to Firestore mail logs
+  // Listen to Firestore mail logs (chỉ lắng nghe khi là Admin)
   useEffect(() => {
+    if (!isAdmin) return;
     setLoading(true);
     const mailCol = collection(db, 'mail');
     const q = query(mailCol, orderBy('createdAt', 'desc'), limit(30));
@@ -83,7 +87,7 @@ export const MailQueueViewerModal: React.FC<{
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [isAdmin]);
 
   // Save Webhook config
   const handleSaveConfig = async (e: React.FormEvent) => {
@@ -167,6 +171,11 @@ export const MailQueueViewerModal: React.FC<{
       setIsTesting(false);
     }
   };
+
+  // Nếu người dùng không phải Quản trị viên, tuyệt đối không hiển thị cửa sổ
+  if (!isAdmin) {
+    return null;
+  }
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">

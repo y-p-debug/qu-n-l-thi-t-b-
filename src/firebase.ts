@@ -73,6 +73,7 @@ export const db: Firestore = (firebaseConfig as { firestoreDatabaseId?: string }
   : getFirestore(app);
 
 export const storage = getStorage(app);
+export { storageRef, deleteObject };
 
 /**
  * Check if an email is authorized in ALLOWED_USERS_LIST
@@ -80,10 +81,24 @@ export const storage = getStorage(app);
 export function checkEmailAllowedLocally(email: string | null | undefined): { allowed: boolean; name?: string } {
   if (!email) return { allowed: false };
   const normalized = email.trim().toLowerCase();
+
+  // 1. Check exact match in ALLOWED_USERS_LIST (includes 47 company members + phamphannhuy205@gmail.com)
   const found = ALLOWED_USERS_LIST.find(u => u.email.toLowerCase() === normalized);
   if (found) {
     return { allowed: true, name: found.name };
   }
+
+  // 2. Explicitly allow phamphannhuy205@gmail.com (case-insensitive) - strictly NO other gmail.com
+  if (normalized === 'phamphannhuy205@gmail.com') {
+    return { allowed: true, name: 'PHAM PHAN NHU Y' };
+  }
+
+  // 3. Allow authorized company domains @dymvietnam.net and @dymvietnam.jp (e.g. le-v@dymvietnam.jp)
+  if (normalized.endsWith('@dymvietnam.net') || normalized.endsWith('@dymvietnam.jp')) {
+    const userPart = normalized.split('@')[0];
+    return { allowed: true, name: userPart.toUpperCase() };
+  }
+
   return { allowed: false };
 }
 

@@ -56,8 +56,15 @@ export const BookingTable: React.FC<BookingTableProps> = ({
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Apply filters
-  const filteredBookings = bookings.filter((b) => {
+  // Bản ghi hiển thị theo phân quyền:
+  // Admin (y-p@dymvietnam.net): thấy tất cả (kể cả đã trả)
+  // Non-admin: KHÔNG THẤY bất kỳ bản ghi nào có trạng thái "Đã trả" (isReturned == true)
+  const visibleBookings = isAdmin 
+    ? bookings 
+    : bookings.filter((b) => b.isReturned !== true);
+
+  // Apply filters trên tập bản ghi được phép thấy
+  const filteredBookings = visibleBookings.filter((b) => {
     // Date filter
     if (filterDate && b.date !== filterDate) return false;
 
@@ -241,11 +248,16 @@ export const BookingTable: React.FC<BookingTableProps> = ({
 
           {/* Quick status summary counts */}
           <div className="flex items-center gap-2 text-xs">
-            <span className="px-2.5 py-1 rounded-lg bg-white text-[#03045E] border border-[#90E0EF] font-medium">
-              Đã trả: {bookings.filter(b => b.isReturned).length}
-            </span>
+            {isAdmin && (
+              <span className="px-2.5 py-1 rounded-lg bg-white text-[#03045E] border border-[#90E0EF] font-medium">
+                Đã trả: {bookings.filter(b => b.isReturned).length}
+              </span>
+            )}
             <span className="px-2.5 py-1 rounded-lg bg-[#C0392B] text-white font-bold shadow-xs">
-              Quá giờ: {bookings.filter(b => isBookingOverdue(b)).length}
+              Quá giờ: {visibleBookings.filter(b => isBookingOverdue(b)).length}
+            </span>
+            <span className="px-2.5 py-1 rounded-lg bg-[#CAF0F8] text-[#03045E] font-bold border border-[#ADE8F4]">
+              Tổng: {visibleBookings.length}
             </span>
           </div>
         </div>
@@ -296,7 +308,7 @@ export const BookingTable: React.FC<BookingTableProps> = ({
             </select>
           </div>
 
-          {/* Status Filter */}
+          {/* Status Filter (Chỉ hiện 'Đã trả' cho Admin y-p@dymvietnam.net) */}
           <div>
             <select
               value={filterStatus}
@@ -306,7 +318,7 @@ export const BookingTable: React.FC<BookingTableProps> = ({
               <option value="ALL">Tất cả trạng thái (All Status)</option>
               <option value="IN_USE">Đang mượn (Trong giờ)</option>
               <option value="OVERDUE">⚠️ Quá giờ chưa trả (Overdue)</option>
-              <option value="RETURNED">✓ Đã trả (Returned)</option>
+              {isAdmin && <option value="RETURNED">✓ Đã trả (Returned)</option>}
             </select>
           </div>
         </div>
@@ -388,10 +400,14 @@ export const BookingTable: React.FC<BookingTableProps> = ({
           <tbody className="divide-y divide-[#ADE8F4]/60">
             {filteredBookings.length === 0 ? (
               <tr>
-                <td colSpan={isAdmin ? 10 : 9} className="py-12 text-center text-[#03045E]/60">
+                <td colSpan={isAdmin ? 10 : 9} className="py-12 text-center text-[#03045E]/70">
                   <div className="flex flex-col items-center justify-center gap-2">
                     <Filter className="w-8 h-8 text-[#0096C7] stroke-[1.5]" />
-                    <p className="text-sm font-medium">Không tìm thấy lượt mượn nào phù hợp với bộ lọc.</p>
+                    <p className="text-sm font-semibold text-[#03045E]">
+                      {!isAdmin || visibleBookings.length === 0 
+                        ? 'Không có thiết bị đang mượn • 貸出中の機器はありません'
+                        : 'Không tìm thấy lượt mượn nào phù hợp với bộ lọc.'}
+                    </p>
                   </div>
                 </td>
               </tr>
@@ -495,8 +511,8 @@ export const BookingTable: React.FC<BookingTableProps> = ({
                             Đã trả
                           </span>
 
-                          {/* Thumbnail button */}
-                          {b.returnPhotoUrl && (
+                          {/* Thumbnail button hoặc chữ "Không có ảnh" */}
+                          {b.returnPhotoUrl ? (
                             <button
                               type="button"
                               onClick={() => setPreviewImageUrl(b.returnPhotoUrl || null)}
@@ -512,6 +528,8 @@ export const BookingTable: React.FC<BookingTableProps> = ({
                                 <Eye className="w-3.5 h-3.5" />
                               </div>
                             </button>
+                          ) : (
+                            <span className="text-[10px] text-[#023E8A]/50 italic">Không có ảnh</span>
                           )}
                           <span className="text-[10px] text-[#023E8A]/70">
                             {formatDateTimeDisplay(b.returnedAt)}
@@ -578,9 +596,13 @@ export const BookingTable: React.FC<BookingTableProps> = ({
       {/* Mobile Card List (Hiển thị thẻ dễ đọc trên điện thoại) */}
       <div className="md:hidden divide-y divide-[#ADE8F4]/60">
         {filteredBookings.length === 0 ? (
-          <div className="p-8 text-center text-[#03045E]/60">
+          <div className="p-8 text-center text-[#03045E]/70">
             <Filter className="w-8 h-8 mx-auto text-[#0096C7] stroke-[1.5] mb-2" />
-            <p className="text-sm font-medium">Không tìm thấy lượt mượn nào phù hợp với bộ lọc.</p>
+            <p className="text-sm font-semibold text-[#03045E]">
+              {!isAdmin || visibleBookings.length === 0 
+                ? 'Không có thiết bị đang mượn • 貸出中の機器はありません'
+                : 'Không tìm thấy lượt mượn nào phù hợp với bộ lọc.'}
+            </p>
           </div>
         ) : (
           filteredBookings.map((b) => {
@@ -675,7 +697,7 @@ export const BookingTable: React.FC<BookingTableProps> = ({
                 <div className="flex items-center justify-between pt-1 gap-2">
                   {b.isReturned ? (
                     <div className="flex items-center gap-2">
-                      {b.returnPhotoUrl && (
+                      {b.returnPhotoUrl ? (
                         <button
                           type="button"
                           onClick={() => setPreviewImageUrl(b.returnPhotoUrl || null)}
@@ -691,6 +713,8 @@ export const BookingTable: React.FC<BookingTableProps> = ({
                             <Eye className="w-3 h-3" />
                           </div>
                         </button>
+                      ) : (
+                        <span className="text-[10px] text-[#023E8A]/50 italic">Không có ảnh</span>
                       )}
                       <span className="text-[10px] text-[#023E8A]/70">
                         {formatDateTimeDisplay(b.returnedAt)}

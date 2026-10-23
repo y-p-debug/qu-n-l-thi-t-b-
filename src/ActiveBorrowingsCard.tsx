@@ -84,7 +84,7 @@ export const ActiveBorrowingsCard: React.FC<ActiveBorrowingsCardProps> = ({
 
         <div className="text-xs text-[#03045E] bg-[#CAF0F8]/50 px-3 py-1.5 rounded-xl border border-[#ADE8F4] font-semibold self-start sm:self-auto flex items-center gap-1.5">
           <Sparkles className="w-3.5 h-3.5 text-[#0096C7]" />
-          <span>Yêu cầu chụp ảnh vị trí khi trả</span>
+          <span>Nên chụp ảnh vị trí khi trả (không bắt buộc)</span>
         </div>
       </div>
 

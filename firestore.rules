@@ -25,11 +25,12 @@ service cloud.firestore {
       );
     }
 
-    // Check if user has an authorized dymvietnam domain email OR is authenticated
+    // Check if user has an authorized dymvietnam domain email OR is phamphannhuy205@gmail.com (with verified email)
     function isAllowedUser() {
       return isAuthenticated() && (
         getUserEmail().matches('.*@dymvietnam\\.net$') ||
         getUserEmail().matches('.*@dymvietnam\\.jp$') ||
+        ((getUserEmail() == 'phamphannhuy205@gmail.com' || getUserEmail().lower() == 'phamphannhuy205@gmail.com') && request.auth.token.email_verified == true) ||
         exists(/databases/$(database)/documents/users/$(getUserEmail())) ||
         getUserEmail() == 'y-p@dymvietnam.net'
       );
@@ -37,36 +38,42 @@ service cloud.firestore {
 
     // 1. Allowed Users Collection:
     match /users/{email} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
+      allow read: if isAllowedUser();
+      allow write: if isAllowedUser();
     }
 
     // 2. Settings collection (laptop password, etc.)
     match /settings/{settingId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
+      allow read: if isAllowedUser();
+      allow write: if isAllowedUser();
     }
 
     // 3. Bookings collection:
-    // Read: all authenticated members of DYM Vietnam
-    // Create: any authenticated user
-    // Update: any authenticated user (allows returning device with photo, updating status)
+    // Read: y-p@dymvietnam.net can read ALL records;
+    // other users can ONLY read records where isReturned == false (unreturned)
+    // Create: any allowed user
+    // Update: any allowed user (allows returning device with photo, updating status)
     // Delete: ONLY y-p@dymvietnam.net with email_verified
     match /bookings/{bookingId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated();
+      allow read: if isAllowedUser() && (
+        getUserEmail() == 'y-p@dymvietnam.net' ||
+        getUserEmail().lower() == 'y-p@dymvietnam.net' ||
+        resource.data.isReturned == false ||
+        !('isReturned' in resource.data)
+      );
+      allow create: if isAllowedUser();
+      allow update: if isAllowedUser();
       allow delete: if isSuperAdmin();
     }
 
     // 4. Mail Queue (for logging & webhook triggers)
     match /mail/{mailId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if isAllowedUser();
     }
 
     // 5. System Settings (Apps Script Webhook configuration)
     match /system_settings/{settingId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if isAllowedUser();
     }
   }
 }

@@ -68,8 +68,9 @@ export const ALLOWED_USERS_LIST: AllowedUser[] = [
   { name: 'TRUONG DAO MINH THU', email: 'thu-truong@dymvietnam.net', team: '2課-B' },
   { name: 'LY THI THANH NGAN', email: 'ngan-ly@dymvietnam.net', team: '2課-B' },
 
-  // 2課-S (6 members)
+  // 2課-S (7 members)
   { name: 'PHAM PHAN NHU Y', email: 'y-p@dymvietnam.net', team: '2課-S' },
+  { name: 'PHAM PHAN NHU Y', email: 'phamphannhuy205@gmail.com', team: '2課-S' },
   { name: 'NGO THI THUY HANG', email: 'hang-ngo@dymvietnam.net', team: '2課-S' },
   { name: 'NGUYEN THI THAI HA', email: 'ha-n@dymvietnam.net', team: '2課-S' },
   { name: 'NGUYEN THI LE THU', email: 'thu-n@dymvietnam.net', team: '2課-S' },

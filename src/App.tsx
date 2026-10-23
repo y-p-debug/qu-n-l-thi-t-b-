@@ -20,6 +20,7 @@ import {
   collection, 
   query, 
   orderBy, 
+  where,
   onSnapshot,
   doc,
   updateDoc
@@ -58,7 +59,8 @@ import {
   AlertCircle,
   Mail,
   ClipboardList,
-  MapPin
+  MapPin,
+  CheckCircle2
 } from 'lucide-react';
 import { THEME_COLORS } from './theme';
 
@@ -102,6 +104,7 @@ export default function App() {
 
   // Return modal state
   const [selectedBookingForReturn, setSelectedBookingForReturn] = useState<BookingRecord | null>(null);
+  const [returnSuccessToast, setReturnSuccessToast] = useState<string | null>(null);
 
   // Cabinet Map modal state
   const [cabinetModalState, setCabinetModalState] = useState<{
@@ -189,7 +192,7 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Listen to Firestore Bookings realtime
+  // Listen to Firestore Bookings realtime (chỉ admin mới thấy bản ghi đã trả)
   useEffect(() => {
     if (!currentUser) {
       setBookings([]);
@@ -197,10 +200,17 @@ export default function App() {
       return;
     }
 
+    const userIsAdmin = Boolean(
+      currentUser.email && currentUser.email.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase()
+    );
+
     setIsDataLoading(true);
     const bookingsCol = collection(db, 'bookings');
-    // Order by date descending, then startTime descending
-    const q = query(bookingsCol, orderBy('date', 'desc'), orderBy('startTime', 'desc'));
+    // Admin: lấy toàn bộ bản ghi
+    // Non-admin: chỉ truy vấn các bản ghi chưa trả where('isReturned', '==', false)
+    const q = userIsAdmin
+      ? query(bookingsCol, orderBy('date', 'desc'), orderBy('startTime', 'desc'))
+      : query(bookingsCol, where('isReturned', '==', false));
 
     const unsubscribe = onSnapshot(
       q,
@@ -209,12 +219,24 @@ export default function App() {
         snapshot.forEach((doc) => {
           list.push({ id: doc.id, ...doc.data() } as BookingRecord);
         });
-        setBookings(list);
+
+        // Với Non-admin: lọc thêm ở tầng state để đảm bảo 100% không chứa bản ghi đã trả
+        const filteredList = userIsAdmin
+          ? list
+          : list.filter((b) => b.isReturned !== true);
+
+        // Sắp xếp ngày giảm dần, giờ giảm dần
+        filteredList.sort((a, b) => {
+          if (a.date !== b.date) return b.date.localeCompare(a.date);
+          return b.startTime.localeCompare(a.startTime);
+        });
+
+        setBookings(filteredList);
         setIsDataLoading(false);
 
         // Client-side overdue verification running with active auth credentials
         const now = new Date();
-        list.forEach(async (b) => {
+        filteredList.forEach(async (b) => {
           if (b.isReturned || b.overdueNotified || !b.date || !b.endTime) return;
           try {
             const [year, month, day] = b.date.split('-').map(Number);
@@ -229,7 +251,7 @@ export default function App() {
               });
 
               const borrowerEmail = (b.registrantEmail || '').trim();
-              const recipients = Array.from(new Set([borrowerEmail, 'y-p@dymvietnam.net'].filter(Boolean)));
+              const recipients = Array.from(new Set([borrowerEmail, ADMIN_EMAIL].filter(Boolean)));
               const { subject, html } = generateEmailHtml({
                 actionType: 'overdue',
                 booking: b
@@ -382,6 +404,9 @@ export default function App() {
 
   const isLoginView = !isAuthLoading && !currentUser;
 
+  // Quyền Quản trị viên (ADMIN_EMAIL = y-p@dymvietnam.net, so sánh không phân biệt hoa thường)
+  const isAdmin = Boolean(currentUser?.email && currentUser.email.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase());
+
   // Đồng bộ màu nền của body để không có dải trắng/xám khi cuộn trang
   useEffect(() => {
     if (typeof document !== 'undefined') {
@@ -442,20 +467,19 @@ export default function App() {
 
           {/* Right Header: User profile or Sign In */}
           <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 flex-nowrap">
-            <button
-              type="button"
-              onClick={() => setShowMailQueueModal(true)}
-              className={
-                isLoginView
-                  ? 'text-xs text-blue-200 bg-blue-500/20 hover:bg-blue-500/30 px-2.5 sm:px-3 py-1.5 rounded-xl border border-blue-400/30 transition-colors flex items-center gap-1.5 font-medium cursor-pointer'
-                  : 'w-9 h-9 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 rounded-xl text-[#CAF0F8] bg-transparent hover:bg-[#023E8A] border border-[#48CAE4] transition-colors flex items-center justify-center gap-1.5 font-bold shadow-xs cursor-pointer shrink-0'
-              }
-              title="Hàng đợi Email"
-              aria-label="Hàng đợi Email"
-            >
-              <Mail className={isLoginView ? 'w-4 h-4 text-blue-300' : 'w-4 h-4 text-[#48CAE4] shrink-0'} />
-              <span className="hidden sm:inline text-[11px] sm:text-xs font-bold text-[#CAF0F8]">Hàng đợi Email</span>
-            </button>
+            {/* Nút Hàng đợi Email: CHỈ RENDER CHO QUẢN TRỊ VIÊN (y-p@dymvietnam.net) */}
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => setShowMailQueueModal(true)}
+                className="w-9 h-9 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 rounded-xl text-[#CAF0F8] bg-transparent hover:bg-[#023E8A] border border-[#48CAE4] transition-colors flex items-center justify-center gap-1.5 font-bold shadow-xs cursor-pointer shrink-0"
+                title="Hàng đợi Email"
+                aria-label="Hàng đợi Email"
+              >
+                <Mail className="w-4 h-4 text-[#48CAE4] shrink-0" />
+                <span className="hidden sm:inline text-[11px] sm:text-xs font-bold text-[#CAF0F8]">Hàng đợi Email</span>
+              </button>
+            )}
 
             <button
               type="button"
@@ -723,24 +747,34 @@ export default function App() {
         </main>
       )}
 
-      {/* Return Device Modal with camera capture requirement */}
+      {/* Return Device Modal */}
       {selectedBookingForReturn && (
         <ReturnDeviceModal
           booking={selectedBookingForReturn}
           onClose={() => setSelectedBookingForReturn(null)}
-          onSuccess={() => setSelectedBookingForReturn(null)}
+          onSuccess={() => {
+            setSelectedBookingForReturn(null);
+            setReturnSuccessToast("Đã trả thiết bị thành công • 返却が完了しました");
+            setTimeout(() => {
+              setReturnSuccessToast(null);
+            }, 5000);
+          }}
         />
       )}
 
       {/* Guide Modal */}
       {showGuideModal && (
-        <DeploymentGuideModal onClose={() => setShowGuideModal(false)} />
+        <DeploymentGuideModal
+          userEmail={currentUser?.email || ''}
+          isAdmin={isAdmin}
+          onClose={() => setShowGuideModal(false)}
+        />
       )}
 
-      {/* Mail Queue Viewer Modal */}
-      {showMailQueueModal && (
+      {/* Mail Queue Viewer Modal - CHỈ CHO QUẢN TRỊ VIÊN */}
+      {isAdmin && showMailQueueModal && (
         <MailQueueViewerModal 
-          userEmail={currentUser?.email || 'y-p@dymvietnam.net'} 
+          userEmail={currentUser?.email || ''} 
           onClose={() => setShowMailQueueModal(false)} 
         />
       )}
@@ -768,6 +802,24 @@ export default function App() {
       {/* Hệ thống hiệu ứng nền động sau khi đăng nhập (mặc định tắt hẳn, chỉ render khi được chọn) */}
       {!isLoginView && currentUser && activeEffect !== 'none' && (
         <BackgroundEffectsOverlay activeEffect={activeEffect} />
+      )}
+
+      {/* Thông báo trả thiết bị thành công cho người dùng */}
+      {returnSuccessToast && (
+        <div className="fixed bottom-6 right-6 z-50 max-w-md bg-emerald-600 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-emerald-400 animate-in slide-in-from-bottom-4 duration-200">
+          <CheckCircle2 className="w-5 h-5 text-white shrink-0" />
+          <div className="text-xs sm:text-sm font-bold flex-1">
+            {returnSuccessToast}
+          </div>
+          <button
+            type="button"
+            onClick={() => setReturnSuccessToast(null)}
+            className="p-1 hover:bg-white/20 rounded-lg text-white/80 hover:text-white transition-colors cursor-pointer text-xs"
+            title="Đóng"
+          >
+            ✕
+          </button>
+        </div>
       )}
 
       {/* Footer (chân trang trong suốt, chữ --b2 #023E8A) */}

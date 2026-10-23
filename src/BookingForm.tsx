@@ -67,7 +67,9 @@ export const BookingForm: React.FC<BookingFormProps> = ({
 
   // Find initial user & their team
   const initialUser = ALLOWED_USERS_LIST.find(
-    (u) => u.name === currentUserName || u.email.toLowerCase() === currentUserEmail.toLowerCase()
+    (u) => u.email.toLowerCase() === currentUserEmail.toLowerCase()
+  ) || ALLOWED_USERS_LIST.find(
+    (u) => u.name === currentUserName
   );
 
   const [date, setDate] = useState<string>(todayStr);
@@ -76,6 +78,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
   const [device, setDevice] = useState<DeviceType | ''>('');
   const [team, setTeam] = useState<TeamType>(initialUser ? initialUser.team : '1課');
   const [registrantName, setRegistrantName] = useState<string>(initialUser ? initialUser.name : currentUserName);
+  const [registrantEmail, setRegistrantEmail] = useState<string>(initialUser ? initialUser.email : currentUserEmail);
   const [purpose, setPurpose] = useState<string>('');
 
   // Searchable registrant dropdown state
@@ -104,13 +107,17 @@ export const BookingForm: React.FC<BookingFormProps> = ({
   useEffect(() => {
     if (currentUserEmail || currentUserName) {
       const found = ALLOWED_USERS_LIST.find(
-        (u) => u.email.toLowerCase() === currentUserEmail.toLowerCase() || u.name === currentUserName
+        (u) => u.email.toLowerCase() === currentUserEmail.toLowerCase()
+      ) || ALLOWED_USERS_LIST.find(
+        (u) => u.name === currentUserName
       );
       if (found) {
         setRegistrantName(found.name);
+        setRegistrantEmail(found.email);
         setTeam(found.team);
       } else if (currentUserName) {
         setRegistrantName(currentUserName);
+        setRegistrantEmail(currentUserEmail);
       }
     }
   }, [currentUserName, currentUserEmail]);
@@ -243,13 +250,15 @@ export const BookingForm: React.FC<BookingFormProps> = ({
     const isCurrentInTeam = membersInNewTeam.some((u) => u.name === registrantName);
     if (!isCurrentInTeam && membersInNewTeam.length > 0) {
       setRegistrantName(membersInNewTeam[0].name);
+      setRegistrantEmail(membersInNewTeam[0].email);
     }
     setRegistrantSearchText('');
   };
 
-  // LOGIC 2: Khi chọn Member -> tự động cập nhật Team tương ứng
+  // LOGIC 2: Khi chọn Member -> tự động cập nhật Team và Email tương ứng
   const handleSelectMember = (member: typeof ALLOWED_USERS_LIST[number]) => {
     setRegistrantName(member.name);
+    setRegistrantEmail(member.email);
     setTeam(member.team);
     setIsRegistrantDropdownOpen(false);
     setRegistrantSearchText('');
@@ -318,9 +327,11 @@ export const BookingForm: React.FC<BookingFormProps> = ({
     setIsSubmitting(true);
 
     try {
-      // Find corresponding email for the selected registrant
-      const registrantObj = ALLOWED_USERS_LIST.find((u) => u.name === registrantName);
-      const registrantEmail = registrantObj ? registrantObj.email : currentUserEmail;
+      // Find corresponding email for the selected registrant (accurate matching)
+      const registrantObj = ALLOWED_USERS_LIST.find(
+        (u) => u.name === registrantName && u.email.toLowerCase() === (registrantEmail || currentUserEmail).toLowerCase()
+      ) || ALLOWED_USERS_LIST.find((u) => u.name === registrantName);
+      const finalRegistrantEmail = registrantEmail || (registrantObj ? registrantObj.email : currentUserEmail);
 
       const newBookingId = doc(collection(db, 'bookings')).id;
 
@@ -346,7 +357,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
           device,
           team,
           registrantName,
-          registrantEmail,
+          registrantEmail: finalRegistrantEmail,
           purpose: purpose.trim(),
           isReturned: false,
           returnedAt: null,
@@ -615,7 +626,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                       </div>
                     ) : (
                       filteredMembers.map((u) => {
-                        const isSelected = u.name === registrantName;
+                        const isSelected = u.name === registrantName && (!registrantEmail || u.email.toLowerCase() === registrantEmail.toLowerCase());
                         return (
                           <div
                             key={u.email}
@@ -650,7 +661,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                         </span>
                       </div>
                       {filteredMembers.map((u) => {
-                        const isSelected = u.name === registrantName;
+                        const isSelected = u.name === registrantName && (!registrantEmail || u.email.toLowerCase() === registrantEmail.toLowerCase());
                         return (
                           <div
                             key={u.email}
@@ -680,7 +691,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                             </span>
                           </div>
                           {otherTeamMembers.map((u) => {
-                            const isSelected = u.name === registrantName;
+                            const isSelected = u.name === registrantName && (!registrantEmail || u.email.toLowerCase() === registrantEmail.toLowerCase());
                             return (
                               <div
                                 key={u.email}

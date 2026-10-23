@@ -6,23 +6,33 @@ service firebase.storage {
       return request.auth != null;
     }
 
+    function isAllowedUser() {
+      return isAuthenticated() && (
+        request.auth.token.email.matches('.*@dymvietnam\\.net$') ||
+        request.auth.token.email.matches('.*@dymvietnam\\.jp$') ||
+        ((request.auth.token.email == 'phamphannhuy205@gmail.com' || request.auth.token.email.lower() == 'phamphannhuy205@gmail.com') && request.auth.token.email_verified == true) ||
+        request.auth.token.email == 'y-p@dymvietnam.net'
+      );
+    }
+
     function isSuperAdmin() {
       return isAuthenticated() && 
-        request.auth.token.email == 'y-p@dymvietnam.net' &&
+        (request.auth.token.email == 'y-p@dymvietnam.net' || request.auth.token.email.lower() == 'y-p@dymvietnam.net') &&
         request.auth.token.email_verified == true;
     }
 
     // Return photos for device return confirmation
+    // Only admin y-p@dymvietnam.net can read/view return photos
     match /returns/{allPaths=**} {
-      // Authenticated users can view and upload return verification photos
-      allow read, create, update: if isAuthenticated();
-      // Only y-p@dymvietnam.net can delete return photos
-      allow delete: if isSuperAdmin();
+      allow read: if isAuthenticated() && (request.auth.token.email == 'y-p@dymvietnam.net' || request.auth.token.email.lower() == 'y-p@dymvietnam.net');
+      allow create, update: if isAllowedUser();
+      // Allow delete if allowed user (so user can remove their chosen/uploaded return photo) OR superAdmin
+      allow delete: if isAllowedUser();
     }
 
     // Default rule for other files in storage bucket
     match /{allPaths=**} {
-      allow read, create, update: if isAuthenticated();
+      allow read, create, update: if isAllowedUser();
       allow delete: if isSuperAdmin();
     }
   }

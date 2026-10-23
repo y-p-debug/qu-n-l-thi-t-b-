@@ -50,12 +50,16 @@ service cloud.firestore {
     }
 
     // 3. Bookings collection (Lịch sử mượn trả thiết bị):
-    // - Đọc (read): Mọi thành viên đã đăng nhập
+    // - Đọc (read): y-p@dymvietnam.net đọc được toàn bộ; các thành viên khác CHỈ đọc bản ghi chưa trả (isReturned == false)
     // - Tạo mới (create): Mọi thành viên đã đăng nhập
     // - Cập nhật (update): Mọi thành viên đã đăng nhập (để trả thiết bị và gửi ảnh)
     // - Xoá (delete): DUY NHẤT y-p@dymvietnam.net (ngăn chặn mọi hành vi gọi API trực tiếp)
     match /bookings/{bookingId} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() && (
+        getUserEmail() == 'y-p@dymvietnam.net' ||
+        resource.data.isReturned == false ||
+        !('isReturned' in resource.data)
+      );
       allow create: if isAuthenticated();
       allow update: if isAuthenticated();
       allow delete: if isSuperAdmin();
@@ -99,11 +103,11 @@ service firebase.storage {
     }
 
     // Thư mục lưu ảnh xác nhận trả thiết bị
+    // CHỈ Quản trị viên y-p@dymvietnam.net mới được xem ảnh
     match /returns/{allPaths=**} {
-      // Mọi thành viên đã đăng nhập có thể xem và upload ảnh trả
-      allow read, create, update: if isAuthenticated();
-      // Chỉ y-p@dymvietnam.net mới có quyền xoá ảnh
-      allow delete: if isSuperAdmin();
+      allow read: if isAuthenticated() && request.auth.token.email == 'y-p@dymvietnam.net';
+      allow create, update: if isAuthenticated();
+      allow delete: if isAuthenticated();
     }
 
     // Các tệp khác

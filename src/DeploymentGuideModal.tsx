@@ -21,12 +21,24 @@ import {
   Mail,
   UserCheck
 } from 'lucide-react';
+import { ADMIN_EMAIL } from './types';
 
 interface DeploymentGuideModalProps {
   onClose: () => void;
+  userEmail?: string;
+  isAdmin?: boolean;
 }
 
-export const DeploymentGuideModal: React.FC<DeploymentGuideModalProps> = ({ onClose }) => {
+export const DeploymentGuideModal: React.FC<DeploymentGuideModalProps> = ({ 
+  onClose,
+  userEmail = '',
+  isAdmin: propIsAdmin
+}) => {
+  // Xác định quyền quản trị viên: y-p@dymvietnam.net (không phân biệt hoa thường)
+  const isAdmin = Boolean(
+    propIsAdmin ?? (userEmail && userEmail.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase())
+  );
+
   // Quản lý trạng thái mở/đóng của các accordion, mặc định mục 1 mở sẵn
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     '1': true,
@@ -61,7 +73,7 @@ export const DeploymentGuideModal: React.FC<DeploymentGuideModalProps> = ({ onCl
  * Nhận POST từ backend và dùng GmailApp để gửi mail trực tiếp tới người mượn & y-p@dymvietnam.net
  */
 const SECRET_KEY = "DYM_VIETNAM_DEVICE_SECRET"; // Đặt trùng với biến APPS_SCRIPT_SECRET
-const ADMIN_EMAIL = "y-p@dymvietnam.net";
+const ADMIN_EMAIL = "${ADMIN_EMAIL}";
 
 function doPost(e) {
   try {
@@ -397,7 +409,7 @@ function doPost(e) {
                     </span>
                   </div>
                   <div className="text-[11px] text-slate-500 font-medium">
-                    Bắt buộc chụp ảnh vị trí đặt thiết bị trong tủ
+                    Nên chụp ảnh vị trí đặt thiết bị trong tủ (không bắt buộc)
                   </div>
                 </div>
               </div>
@@ -418,8 +430,8 @@ function doPost(e) {
                       <div className="text-[10px] text-slate-500">借用した機器および受け取ったすべての付属品。</div>
                     </li>
                     <li>
-                      <div>Điện thoại hoặc máy ảnh để chụp ảnh xác nhận vị trí trả.</div>
-                      <div className="text-[10px] text-slate-500">返却確認写真を撮影するためのスマートフォンまたはカメラ。</div>
+                      <div>Điện thoại hoặc máy ảnh để chụp ảnh xác nhận vị trí trả (nếu chụp ảnh).</div>
+                      <div className="text-[10px] text-slate-500">返却確認写真を撮影するためのスマートフォンまたはカメラ（撮影する場合）。</div>
                     </li>
                   </ul>
                 </div>
@@ -478,10 +490,10 @@ function doPost(e) {
                     </div>
                     <div>
                       <div className="text-xs sm:text-sm font-semibold text-[#03045E]">
-                        Chụp ảnh thiết bị đã đặt đúng vị trí cũ trong tủ rồi tải ảnh lên. Ảnh phải rõ nét, thấy được thiết bị và vị trí đặt. <strong>BẮT BUỘC có ảnh</strong> thì mới trả được.
+                        Nên chụp ảnh thiết bị đã đặt đúng vị trí cũ trong tủ rồi tải lên (không bắt buộc). Có ảnh sẽ giúp truy vết khi thất lạc.
                       </div>
                       <div className="text-[11px] text-slate-500">
-                        キャビネット内の元の位置に設置された機器の写真を撮影し、アップロードします。写真には機器と配置場所が鮮明に写っている必要があります。写真の添付は【必須】です。
+                        元の位置に戻した機器の写真を撮影してアップロードすることを推奨します（任意）。写真があると紛失時の確認に役立ちます。
                       </div>
                     </div>
                   </div>
@@ -509,8 +521,8 @@ function doPost(e) {
                   </div>
                   <ul className="space-y-1.5 pl-5 list-disc text-[11px] text-amber-950">
                     <li>
-                      <div>Nếu chưa chụp ảnh tải lên, hệ thống sẽ <strong>không cho xác nhận trả</strong>.</div>
-                      <div className="text-[10px] text-amber-800">写真がアップロードされていない場合、システムは返却確認を受け付けません。</div>
+                      <div>Chưa có ảnh vẫn có thể xác nhận trả, nhưng nên chụp ảnh.</div>
+                      <div className="text-[10px] text-amber-800">写真がなくても返却できますが、撮影を推奨します。</div>
                     </li>
                     <li>
                       <div>Trả đúng giờ kết thúc đã đăng ký để người sau có thể mượn đúng hẹn.</div>
@@ -592,7 +604,7 @@ function doPost(e) {
                     Các chức năng khác • その他の機能
                   </div>
                   <div className="text-[11px] text-slate-500 font-medium">
-                    Lịch sử mượn, Hàng đợi Email và Sơ đồ tủ
+                    {isAdmin ? 'Lịch sử mượn, Hàng đợi Email và Sơ đồ tủ' : 'Lịch sử mượn và Sơ đồ tủ'}
                   </div>
                 </div>
               </div>
@@ -611,15 +623,17 @@ function doPost(e) {
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <div className="text-xs sm:text-sm font-semibold text-[#03045E] flex items-start gap-2">
-                    <span className="text-[#0096C7] font-bold">•</span>
-                    <span><strong>Hàng đợi Email:</strong> Xem danh sách các email thông báo đã tạo và trạng thái gửi tới người mượn và người quản lý.</span>
+                {isAdmin && (
+                  <div className="space-y-1">
+                    <div className="text-xs sm:text-sm font-semibold text-[#03045E] flex items-start gap-2">
+                      <span className="text-[#0096C7] font-bold">•</span>
+                      <span><strong>Hàng đợi Email (Quản trị viên):</strong> Xem danh sách các email thông báo đã tạo và trạng thái gửi tới người mượn và người quản lý.</span>
+                    </div>
+                    <div className="text-[11px] text-slate-500 pl-4 font-normal">
+                      Hàng đợi Email（メール送信履歴）：作成された通知メール一覧と、借用者および管理者への送信状況を確認できます。
+                    </div>
                   </div>
-                  <div className="text-[11px] text-slate-500 pl-4 font-normal">
-                    Hàng đợi Email（メール送信履歴）：作成された通知メール一覧と、借用者および管理者への送信状況を確認できます。
-                  </div>
-                </div>
+                )}
 
                 <div className="space-y-1">
                   <div className="text-xs sm:text-sm font-semibold text-[#03045E] flex items-start gap-2">
@@ -682,92 +696,94 @@ function doPost(e) {
           </div>
 
           {/* ============================================================== */}
-          {/* MỤC 8: CẤU HÌNH KỸ THUẬT, WEBHOOK & RULES (GIỮ NGUYÊN TOÀN BỘ) */}
+          {/* MỤC 8: CẤU HÌNH KỸ THUẬT, WEBHOOK & RULES (CHỈ QUẢN TRỊ VIÊN)  */}
           {/* ============================================================== */}
-          <div className="border border-slate-300 rounded-2xl overflow-hidden bg-white shadow-2xs transition-all">
-            <button
-              type="button"
-              onClick={() => toggleSection('8')}
-              className="w-full px-4 py-3 bg-slate-100 hover:bg-slate-200/80 flex items-center justify-between gap-3 text-left transition-colors cursor-pointer"
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-7 h-7 rounded-lg bg-slate-800 text-white flex items-center justify-center font-bold text-xs shrink-0">
-                  8
-                </div>
-                <Code className="w-4 h-4 text-slate-700 shrink-0" />
-                <div className="min-w-0">
-                  <div className="font-extrabold text-xs sm:text-sm text-slate-900">
-                    Cấu hình Kỹ thuật, Webhook & Rules (Quản trị viên) • 技術設定・Webhook・Rules
+          {isAdmin && (
+            <div className="border border-slate-300 rounded-2xl overflow-hidden bg-white shadow-2xs transition-all">
+              <button
+                type="button"
+                onClick={() => toggleSection('8')}
+                className="w-full px-4 py-3 bg-slate-100 hover:bg-slate-200/80 flex items-center justify-between gap-3 text-left transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-7 h-7 rounded-lg bg-slate-800 text-white flex items-center justify-center font-bold text-xs shrink-0">
+                    8
                   </div>
-                  <div className="text-[11px] text-slate-500 font-medium">
-                    Google Apps Script Webhook & Tiến trình quét quá hạn tự động
+                  <Code className="w-4 h-4 text-slate-700 shrink-0" />
+                  <div className="min-w-0">
+                    <div className="font-extrabold text-xs sm:text-sm text-slate-900">
+                      Cấu hình Kỹ thuật, Webhook & Rules (Quản trị viên) • 技術設定・Webhook・Rules
+                    </div>
+                    <div className="text-[11px] text-slate-500 font-medium">
+                      Google Apps Script Webhook & Tiến trình quét quá hạn tự động
+                    </div>
                   </div>
                 </div>
-              </div>
-              <ChevronDown className={`w-4 h-4 text-slate-700 shrink-0 transition-transform duration-200 ${openSections['8'] ? 'rotate-180' : ''}`} />
-            </button>
+                <ChevronDown className={`w-4 h-4 text-slate-700 shrink-0 transition-transform duration-200 ${openSections['8'] ? 'rotate-180' : ''}`} />
+              </button>
 
-            {openSections['8'] && (
-              <div className="p-4 space-y-4 border-t border-slate-200 bg-white">
-                {/* Section 1 */}
-                <div className="space-y-1.5 p-3.5 bg-blue-50/70 border border-blue-200 rounded-xl">
-                  <h4 className="font-bold text-sm text-blue-900 flex items-center gap-2">
-                    <Code className="w-4 h-4 text-blue-600 shrink-0" />
-                    <span>Cách tạo Google Apps Script Webhook trong 2 phút:</span>
-                  </h4>
-                  <ol className="list-decimal pl-5 space-y-1 text-slate-800">
-                    <li>Truy cập <a href="https://script.google.com" target="_blank" rel="noreferrer" className="text-blue-600 font-bold underline inline-flex items-center gap-0.5">script.google.com <ExternalLink className="w-3 h-3" /></a> bằng tài khoản <strong>y-p@dymvietnam.net</strong>.</li>
-                    <li>Bấm <strong>Dự án mới (New Project)</strong>, xóa hết code mặc định và dán đoạn mã bên dưới vào.</li>
-                    <li>Bấm nút <strong>Triển khai (Deploy)</strong> &gt; <strong>Triển khai mới (New deployment)</strong>:
-                      <ul className="list-disc pl-5 mt-1 space-y-0.5 text-slate-600">
-                        <li>Chọn loại: <strong>Ứng dụng web (Web app)</strong>.</li>
-                        <li>Thực thi dưới dạng (Execute as): <strong>Tôi (My account)</strong>.</li>
-                        <li>Ai có quyền truy cập (Who has access): <strong>Bất kỳ ai (Anyone)</strong>.</li>
-                      </ul>
-                    </li>
-                    <li>Sao chép <strong>URL ứng dụng web</strong> (có dạng <code>https://script.google.com/macros/s/AKfycb.../exec</code>).</li>
-                    <li>Cấu hình 2 biến môi trường trên server/AI Studio:
-                      <div className="mt-1 font-mono text-[11px] bg-slate-900 text-emerald-400 p-2 rounded-lg">
-                        <div>APPS_SCRIPT_URL="https://script.google.com/macros/s/.../exec"</div>
-                        <div>APPS_SCRIPT_SECRET="DYM_VIETNAM_DEVICE_SECRET"</div>
-                      </div>
-                    </li>
-                  </ol>
-                </div>
-
-                {/* Section 2: Code block */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-800">Mã nguồn Google Apps Script (Code.gs):</span>
-                    <button
-                      type="button"
-                      onClick={() => copyToClipboard(appsScriptSampleCode, 1)}
-                      className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
-                    >
-                      {copiedIndex === 1 ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-500" />}
-                      {copiedIndex === 1 ? 'Đã sao chép!' : 'Sao chép mã'}
-                    </button>
+              {openSections['8'] && (
+                <div className="p-4 space-y-4 border-t border-slate-200 bg-white">
+                  {/* Section 1 */}
+                  <div className="space-y-1.5 p-3.5 bg-blue-50/70 border border-blue-200 rounded-xl">
+                    <h4 className="font-bold text-sm text-blue-900 flex items-center gap-2">
+                      <Code className="w-4 h-4 text-blue-600 shrink-0" />
+                      <span>Cách tạo Google Apps Script Webhook trong 2 phút:</span>
+                    </h4>
+                    <ol className="list-decimal pl-5 space-y-1 text-slate-800">
+                      <li>Truy cập <a href="https://script.google.com" target="_blank" rel="noreferrer" className="text-blue-600 font-bold underline inline-flex items-center gap-0.5">script.google.com <ExternalLink className="w-3 h-3" /></a> bằng tài khoản <strong>{ADMIN_EMAIL}</strong>.</li>
+                      <li>Bấm <strong>Dự án mới (New Project)</strong>, xóa hết code mặc định và dán đoạn mã bên dưới vào.</li>
+                      <li>Bấm nút <strong>Triển khai (Deploy)</strong> &gt; <strong>Triển khai mới (New deployment)</strong>:
+                        <ul className="list-disc pl-5 mt-1 space-y-0.5 text-slate-600">
+                          <li>Chọn loại: <strong>Ứng dụng web (Web app)</strong>.</li>
+                          <li>Thực thi dưới dạng (Execute as): <strong>Tôi (My account)</strong>.</li>
+                          <li>Ai có quyền truy cập (Who has access): <strong>Bất kỳ ai (Anyone)</strong>.</li>
+                        </ul>
+                      </li>
+                      <li>Sao chép <strong>URL ứng dụng web</strong> (có dạng <code>https://script.google.com/macros/s/AKfycb.../exec</code>).</li>
+                      <li>Cấu hình 2 biến môi trường trên server/AI Studio:
+                        <div className="mt-1 font-mono text-[11px] bg-slate-900 text-emerald-400 p-2 rounded-lg">
+                          <div>APPS_SCRIPT_URL="https://script.google.com/macros/s/.../exec"</div>
+                          <div>APPS_SCRIPT_SECRET="DYM_VIETNAM_DEVICE_SECRET"</div>
+                        </div>
+                      </li>
+                    </ol>
                   </div>
 
-                  <pre className="bg-slate-950 text-slate-100 p-3.5 rounded-xl overflow-x-auto text-[11px] font-mono border border-slate-800 max-h-72">
-                    {appsScriptSampleCode}
-                  </pre>
-                </div>
+                  {/* Section 2: Code block */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-slate-800">Mã nguồn Google Apps Script (Code.gs):</span>
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(appsScriptSampleCode, 1)}
+                        className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        {copiedIndex === 1 ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-500" />}
+                        {copiedIndex === 1 ? 'Đã sao chép!' : 'Sao chép mã'}
+                      </button>
+                    </div>
 
-                {/* Section 3: Periodic Scanner */}
-                <div className="space-y-1.5 p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
-                  <h4 className="font-bold text-slate-800 flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-slate-600 shrink-0" />
-                    <span>Cơ chế quét Quá giờ mỗi 5 phút trên Backend:</span>
-                  </h4>
-                  <p className="text-slate-700">
-                    Backend NodeJS chạy tiến trình nền định kỳ mỗi 5 phút tự động quét các bản ghi mượn thiết bị chưa trả (<code>isReturned == false</code>).
-                    Nếu thời gian hiện tại đã vượt quá <code>endTime</code> và cờ <code>overdueNotified == false</code>, hệ thống sẽ tự động gọi Google Apps Script Webhook để gửi email cảnh báo <code>[QUÁ GIỜ]</code> và đánh dấu <code>overdueNotified = true</code> (đảm bảo chỉ gửi 1 lần duy nhất cho mỗi lượt mượn).
-                  </p>
+                    <pre className="bg-slate-950 text-slate-100 p-3.5 rounded-xl overflow-x-auto text-[11px] font-mono border border-slate-800 max-h-72">
+                      {appsScriptSampleCode}
+                    </pre>
+                  </div>
+
+                  {/* Section 3: Periodic Scanner */}
+                  <div className="space-y-1.5 p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
+                    <h4 className="font-bold text-slate-800 flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-slate-600 shrink-0" />
+                      <span>Cơ chế quét Quá giờ mỗi 5 phút trên Backend:</span>
+                    </h4>
+                    <p className="text-slate-700">
+                      Backend NodeJS chạy tiến trình nền định kỳ mỗi 5 phút tự động quét các bản ghi mượn thiết bị chưa trả (<code>isReturned == false</code>).
+                      Nếu thời gian hiện tại đã vượt quá <code>endTime</code> và cờ <code>overdueNotified == false</code>, hệ thống sẽ tự động gọi Google Apps Script Webhook để gửi email cảnh báo <code>[QUÁ GIỜ]</code> và đánh dấu <code>overdueNotified = true</code> (đảm bảo chỉ gửi 1 lần duy nhất cho mỗi lượt mượn).
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
 
         </div>
 
